@@ -1,6 +1,10 @@
 from enum import Enum
 import itertools
 
+class Players(Enum):
+    one = 1
+    two = 2
+
 class Moves(Enum):
     uplayed = 0
     pas = 1
@@ -19,7 +23,7 @@ class KuhnPoker:
         res = 0
         i = 1
 
-        for move in moves:
+        for move in reversed(moves):
             res += i * move.value
             i *= 10
 
@@ -29,12 +33,12 @@ class KuhnPoker:
         return res
 
     @staticmethod
-    def GetInfostate(moves):
+    def GetInfoSet(moves):
         infoSet = KuhnPoker.JoinMoves(moves)
         return infoSet
 
     def AddToPayoffTable(self, result, moves):
-        infoSet = KuhnPoker.GetInfostate(moves)
+        infoSet = KuhnPoker.GetInfoSet(moves)
         self.payoffTable[infoSet] = result
 
     def InitPayoffTable(self):
@@ -47,33 +51,80 @@ class KuhnPoker:
     def __init__(self):
         self.payoffTable = {}
         self.InitPayoffTable()
-        self.cards = list(CARDS)
+        self.infoSet = None
 
-    def IsTerminateState(self, infoSet):
-        return infoSet in self.payoffTable[infoSet]
+        self.cardsPermutations = []
+        for deck in itertools.permutations(CARDS):
+            self.cardsPermutations.append(deck)
 
-    def GetPlayerOnePayoff(self, cardOne, cardTwo, infoSet):
+        self.permutationIndex = 0
+        self.cards = self.cardsPermutations[0]
+
+    def GetPlayerOneCard(self):
+        return self.cards[0]
+
+    def GetPlayerTwoCard(self):
+        return self.cards[1]
+
+    def IsTerminateState(self):
+        return self.infoSet in self.payoffTable
+
+    def GetPayoff(self, player):
+        cardOne = self.GetPlayerOneCard()
+        cardTwo = self.GetPlayerTwoCard()
+
         if(cardOne == cardTwo):
             raise ValueError("The same cards")
 
-        result = self.payoffTable[infoSet]
-        if(result[0] == Results.toPlayer1):
-            return result[1]
-        elif(result[0] == Results.toPlayer2):
-            return -result[1]
+        result = self.payoffTable[self.infoSet]
+
+        winner = result[0]
+        reward = result[1]
+
+        if(player == Players.two):
+            reward = reward * (-1);
+
+        if(winner == Results.toPlayer1):
+            return reward
+        elif(winner == Results.toPlayer2):
+            return -reward
         else:
             if(cardOne > cardTwo):
-                return result[1]
+                return reward
             else:
-                return -result[1]
+                return -reward
 
-    def NexDeck(self):
-        yield itertools.permutations(self.cards)
+    def _nexDeck(self):
+        for deck in itertools.permutations(CARDS):
+            yield deck
 
     def NewRound(self):
-        self.cards = self.NexDeck()
+        self.permutationIndex += 1
+        if(self.permutationIndex >= len(self.cardsPermutations)):
+            self.permutationIndex = 0
 
- 
+        self.cards = self.cardsPermutations[self.permutationIndex]
+
+    def MakeMove(self, move):
+        if (not self.infoSet):
+            self.infoSet = move.value
+        else:
+            self.infoSet *= 10
+            self.infoSet += move.value
 
 
-
+# kn = KuhnPoker()
+# kn.NewRound()
+# kn.NewRound()
+#
+# kn.MakeMove(Moves.pas)
+# print(kn.infoSet)
+# kn.MakeMove(Moves.bet)
+# print(kn.infoSet)
+#
+# kn.MakeMove(Moves.bet)
+# print(kn.infoSet)
+#
+# rr = kn.IsTerminateState()
+# ff = kn.GetPayoff(Players.one)
+# print(ff)
