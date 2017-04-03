@@ -54,6 +54,7 @@ class KuhnPoker:
         self.currentMoveId = 0
 
     def __init__(self):
+        self.PayoffCount = 0
         self.payoffTable = {}
         self.InitPayoffTable()
         self.InitInfoSet()
@@ -78,6 +79,8 @@ class KuhnPoker:
         return np.array_str(self.infoSet)
 
     def GetPayoff(self, player):
+        self.PayoffCount += 1
+
         cardOne = self.GetPlayerOneCard()
         cardTwo = self.GetPlayerTwoCard()
 
@@ -107,12 +110,16 @@ class KuhnPoker:
             yield deck
 
     def NewRound(self):
+        retValue = 0
+
         self.permutationIndex += 1
         if(self.permutationIndex >= len(self.cardsPermutations)):
             self.permutationIndex = 0
+            retValue = 1
 
         self.cards = self.cardsPermutations[self.permutationIndex]
         self.InitInfoSet()
+        return retValue
 
 
     def MakeMove(self, move):

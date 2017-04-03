@@ -1,10 +1,10 @@
 import tensorflow as tf
 import numpy
 import GameProcessor
-import matplotlib.pyplot as plt
 import random
 rng = numpy.random
 import numpy as np
+import math
 import copy
 from sklearn.preprocessing import normalize
 from KuhnPoker import KuhnPoker, Players, Moves, Results, NextPlayer, MovesToOneHot
@@ -23,18 +23,18 @@ def MakeChoise(dist, batchSize):
 # Parameters
 learning_rate = 1e-4
 training_epochs = 1000
-SAMPLE_SIZE = 5
+SAMPLE_SIZE = 40
+DISPLAY_STATS_STEP = 10
 
 INPUT_SIZE = 3 # Max - three possible moves
 OUTPUT_SIZE = 2 # Two actions: pass, bet
 
-alpha = 0.5
+alpha = 0.3
 beta = 0.01
 
 # Network Parameters
 n_hidden_1 = 54 # 1st layer number of features
 n_hidden_2 = 54 # 2nd layer number of features
-
 # # Store layers weight & bias
 # weights = {
 #     'h1': tf.Variable(tf.random_normal([INPUT_SIZE, n_hidden_1])),
@@ -66,15 +66,21 @@ def multilayer_perceptron(x, weights, biases):
     # Hidden layer with RELU activation
     layer_1 = tf.add(tf.matmul(x, weights['h1']), biases['b1'])
     layer_1 = tf.nn.relu(layer_1)
+
+    #dropOp1 = tf.nn.dropout(layer_1, 0.5)
     # Hidden layer with RELU activation
     layer_2 = tf.add(tf.matmul(layer_1, weights['h2']), biases['b2'])
     layer_2 = tf.nn.relu(layer_2)
+
+    #dropOp2 = tf.nn.dropout(layer_2, 0.5)
+
     # Output layer with linear activation
     out_layer = tf.matmul(layer_2, weights['out']) + biases['out']
     return out_layer
 
 
 def TrainModel():
+
     # Construct model
     pred = tf.nn.softmax(multilayer_perceptron(infoState, weights, biases))
     Y = tf.placeholder(tf.float32, [1, OUTPUT_SIZE], name= "Y_output")
@@ -84,35 +90,56 @@ def TrainModel():
     init = tf.global_variables_initializer()
 
     pokerEngine = KuhnPoker()
+    permProb = 1.0 / len(pokerEngine.cardsPermutations)
 
     with tf.Session() as sess:
         sess.run(init)
 
-        totalPayoff = 0
+        displayCyclePayoff = 0
         globalPayoff = 0
+        roundsCount = 0
+        lastPayoffCount = pokerEngine.PayoffCount
+
         for epoch in range(training_epochs):
-            currentPayoff = UpdateSubGraphAndGetValue(sess, pred, optimizer, Y, pokerEngine, Players.one)
-            totalPayoff += currentPayoff
+            currentPayoff = UpdateSubGraphAndGetValue(sess, pred, optimizer, Y, pokerEngine, Players.one, permProb)
+            displayCyclePayoff += currentPayoff
             if(pokerEngine.NewRound() == 1):
-                globalPayoff += totalPayoff
-                print("Total cycle payoff: ", totalPayoff)
-                totalPayoff = 0
+                roundsCount += 1
+                if(roundsCount == DISPLAY_STATS_STEP):
+                    roundsCount = 0
+                    globalPayoff += displayCyclePayoff
+                    gamesCount =  pokerEngine.PayoffCount - lastPayoffCount
+                    p1Payoff = displayCyclePayoff
+                    p2Payoff = -p1Payoff
+
+                    strToPrint = "Cycle payoff. p1: {0:+.3f}, p2: {1:+.3f}" .format(p1Payoff / gamesCount, p2Payoff / gamesCount)
+                    print(strToPrint)
+                    lastPayoffCount = pokerEngine.PayoffCount
+                    displayCyclePayoff = 0
 
         print("Total global payoff: ", globalPayoff)
 
 
-def UpdateSubGraphAndGetValue(sess, pred, optimizer, Y, pokerEngine, player):
+def UpdateSubGraphAndGetValue(sess, pred, optimizer, Y, pokerEngine, player, graphProb):
     infosetBackup = pokerEngine.infoSet.copy()
     pokerEngineMoveId = pokerEngine.currentMoveId
 
 
     if (random.random() < beta):
-        movesProbabileties = [0.33, 0.33]
+        movesProbabileties = np.array([0.33, 0.33])
     else:
         infosetAr = pokerEngine.infoSet.reshape((-1, len(pokerEngine.infoSet)))
         movesProbabileties = sess.run(pred, feed_dict={infoState: infosetAr})[0]
 
-    moveIds = MakeChoise(movesProbabileties, SAMPLE_SIZE)
+    sampleSize = SAMPLE_SIZE * graphProb
+    if(sampleSize < 1):
+        if(random.random() < sampleSize):
+            moveIds = MakeChoise(movesProbabileties, 1)
+        else:
+            moveIds = np.array([])
+    else:
+        sampleSize = round(sampleSize)
+        moveIds = MakeChoise(movesProbabileties, sampleSize)
 
     totalPayoff = 0
     for moveId in moveIds:
@@ -121,7 +148,8 @@ def UpdateSubGraphAndGetValue(sess, pred, optimizer, Y, pokerEngine, player):
         if(pokerEngine.IsTerminateState()):
             currentPayoff = pokerEngine.GetPayoff(player)
         else:
-            currentPayoff = -UpdateSubGraphAndGetValue(sess, pred, optimizer, Y, pokerEngine, NextPlayer(player))
+            subGraphProb = graphProb * movesProbabileties[moveId]
+            currentPayoff = -UpdateSubGraphAndGetValue(sess, pred, optimizer, Y, pokerEngine, NextPlayer(player), subGraphProb)
 
         totalPayoff += currentPayoff
 
