@@ -1,4 +1,6 @@
 from enum import Enum
+from queue import *
+import numpy as np
 import itertools
 
 class Players(Enum):
@@ -8,7 +10,9 @@ class Players(Enum):
 class Moves(Enum):
     uplayed = 0
     pas = 1
-    bet = 2
+    bet = 11
+
+MovesToOneHot = {0: 0, 1: 1, 2: 11}
 
 class Results(Enum):
     toHighCard = 0
@@ -17,19 +21,16 @@ class Results(Enum):
 
 CARDS = [1, 2, 3]
 
+def NextPlayer(currentPlayer):
+    if(currentPlayer == Players.one):
+        return Players.two
+
+    return Players.one
+
 class KuhnPoker:
     @staticmethod
     def JoinMoves(moves):
-        res = 0
-        i = 1
-
-        for move in reversed(moves):
-            res += i * move.value
-            i *= 10
-
-        if (len(moves) < 3):
-            res += i * Moves.uplayed.value
-
+        res = np.array_str(moves)
         return res
 
     @staticmethod
@@ -38,20 +39,24 @@ class KuhnPoker:
         return infoSet
 
     def AddToPayoffTable(self, result, moves):
-        infoSet = KuhnPoker.GetInfoSet(moves)
+        infoSet = KuhnPoker.GetInfoSet(np.array([move.value for move in moves]))
         self.payoffTable[infoSet] = result
 
     def InitPayoffTable(self):
-        self.AddToPayoffTable([Results.toHighCard, 1], [Moves.pas, Moves.pas])
+        self.AddToPayoffTable([Results.toHighCard, 1], [Moves.pas, Moves.pas, Moves.uplayed])
         self.AddToPayoffTable([Results.toPlayer2, 1],  [Moves.pas, Moves.bet, Moves.pas])
         self.AddToPayoffTable([Results.toHighCard, 2], [Moves.pas, Moves.bet, Moves.bet])
-        self.AddToPayoffTable([Results.toPlayer1, 1],  [Moves.bet, Moves.pas])
-        self.AddToPayoffTable([Results.toHighCard, 2], [Moves.bet, Moves.bet])
+        self.AddToPayoffTable([Results.toPlayer1, 1],  [Moves.bet, Moves.pas, Moves.uplayed])
+        self.AddToPayoffTable([Results.toHighCard, 2], [Moves.bet, Moves.bet, Moves.uplayed])
+
+    def InitInfoSet(self):
+        self.infoSet =  np.array([Moves.uplayed.value, Moves.uplayed.value, Moves.uplayed.value])
+        self.currentMoveId = 0
 
     def __init__(self):
         self.payoffTable = {}
         self.InitPayoffTable()
-        self.infoSet = None
+        self.InitInfoSet()
 
         self.cardsPermutations = []
         for deck in itertools.permutations(CARDS):
@@ -67,7 +72,10 @@ class KuhnPoker:
         return self.cards[1]
 
     def IsTerminateState(self):
-        return self.infoSet in self.payoffTable
+        return self.GetStringInfoset() in self.payoffTable
+
+    def GetStringInfoset(self):
+        return np.array_str(self.infoSet)
 
     def GetPayoff(self, player):
         cardOne = self.GetPlayerOneCard()
@@ -76,7 +84,7 @@ class KuhnPoker:
         if(cardOne == cardTwo):
             raise ValueError("The same cards")
 
-        result = self.payoffTable[self.infoSet]
+        result = self.payoffTable[self.GetStringInfoset()]
 
         winner = result[0]
         reward = result[1]
@@ -104,27 +112,18 @@ class KuhnPoker:
             self.permutationIndex = 0
 
         self.cards = self.cardsPermutations[self.permutationIndex]
+        self.InitInfoSet()
+
 
     def MakeMove(self, move):
-        if (not self.infoSet):
-            self.infoSet = move.value
-        else:
-            self.infoSet *= 10
-            self.infoSet += move.value
+        self.MakeOneHotMove(move.value)
+
+    def MakeOneHotMove(self, adHocMove):
+        if(self.currentMoveId >= len(self.infoSet)):
+            ValueError("To much moves!")
+
+        self.infoSet[self.currentMoveId] = adHocMove
+        self.currentMoveId += 1
 
 
-# kn = KuhnPoker()
-# kn.NewRound()
-# kn.NewRound()
-#
-# kn.MakeMove(Moves.pas)
-# print(kn.infoSet)
-# kn.MakeMove(Moves.bet)
-# print(kn.infoSet)
-#
-# kn.MakeMove(Moves.bet)
-# print(kn.infoSet)
-#
-# rr = kn.IsTerminateState()
-# ff = kn.GetPayoff(Players.one)
-# print(ff)
+

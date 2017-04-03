@@ -6,11 +6,11 @@ class TestStringMethods(unittest.TestCase):
         kn = KuhnPoker()
         kn.MakeMove(Moves.pas)
 
-        self.assertTrue(kn.infoSet == Moves.pas.value)
+        self.assertTrue(kn.infoSet[0] == Moves.pas.value)
         self.assertTrue(not kn.IsTerminateState())
 
         kn.MakeMove(Moves.pas)
-        self.assertTrue(kn.infoSet == 10 * Moves.pas.value + Moves.pas.value)
+        self.assertTrue(kn.infoSet[1] == Moves.pas.value)
         self.assertTrue(kn.IsTerminateState())
 
         kn.cards = [1, 2, 3]
