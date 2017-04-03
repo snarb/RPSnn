@@ -7,7 +7,7 @@ import numpy as np
 import math
 import copy
 from sklearn.preprocessing import normalize
-from KuhnPoker import KuhnPoker, Players, Moves, Results, NextPlayer, MovesToOneHot
+from KuhnPoker import KuhnPoker, Players, Moves, Results, NextPlayer, MovesToOneHot, CardsToOneHot
 #numpy.random.seed(12)
 
 def Normalise(v):
@@ -22,15 +22,15 @@ def MakeChoise(dist, batchSize):
 
 # Parameters
 learning_rate = 1e-4
-training_epochs = 1000
-SAMPLE_SIZE = 40
+training_epochs = 2000
+SAMPLE_SIZE = 80
 DISPLAY_STATS_STEP = 10
 
-INPUT_SIZE = 3 # Max - three possible moves
+INPUT_SIZE = 4 # Max - three possible moves
 OUTPUT_SIZE = 2 # Two actions: pass, bet
 
-alpha = 0.3
-beta = 0.01
+alpha = 0.1
+beta = 0.005
 
 # Network Parameters
 n_hidden_1 = 54 # 1st layer number of features
@@ -120,6 +120,17 @@ def TrainModel():
         print("Total global payoff: ", globalPayoff)
 
 
+def GetStateArray(pokerEngine, player):
+    if (player == Players.one):
+        card = pokerEngine.cards[0]
+    else:
+        card = pokerEngine.cards[1]
+
+    carOneHot = CardsToOneHot[card]
+    mixedAr = np.append(pokerEngine.infoSet, carOneHot)
+    mixedAr = mixedAr.reshape((-1, len(mixedAr)))
+    return mixedAr
+
 def UpdateSubGraphAndGetValue(sess, pred, optimizer, Y, pokerEngine, player, graphProb):
     infosetBackup = pokerEngine.infoSet.copy()
     pokerEngineMoveId = pokerEngine.currentMoveId
@@ -128,8 +139,8 @@ def UpdateSubGraphAndGetValue(sess, pred, optimizer, Y, pokerEngine, player, gra
     if (random.random() < beta):
         movesProbabileties = np.array([0.33, 0.33])
     else:
-        infosetAr = pokerEngine.infoSet.reshape((-1, len(pokerEngine.infoSet)))
-        movesProbabileties = sess.run(pred, feed_dict={infoState: infosetAr})[0]
+        mixedAr = GetStateArray(pokerEngine, player)
+        movesProbabileties = sess.run(pred, feed_dict={infoState: mixedAr})[0]
 
     sampleSize = SAMPLE_SIZE * graphProb
     if(sampleSize < 1):
@@ -161,8 +172,8 @@ def UpdateSubGraphAndGetValue(sess, pred, optimizer, Y, pokerEngine, player, gra
         pokerEngine.currentMoveId = pokerEngineMoveId
 
     Yar = movesProbabileties.reshape((-1, len(movesProbabileties)))
-    infosetAr = pokerEngine.infoSet.reshape((-1, len(pokerEngine.infoSet)))
-    sess.run(optimizer, feed_dict={Y: Yar, infoState: infosetAr})
+    mixedAr = GetStateArray(pokerEngine, player)
+    sess.run(optimizer, feed_dict={Y: Yar, infoState: mixedAr})
     return totalPayoff
 
 

@@ -13,6 +13,7 @@ class Moves(Enum):
     bet = 11
 
 MovesToOneHot = {0: 0, 1: 1, 2: 11}
+CardsToOneHot = {1: 0, 2: 1, 3: 11}
 
 class Results(Enum):
     toHighCard = 0
