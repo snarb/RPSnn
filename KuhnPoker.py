@@ -15,6 +15,8 @@ class Moves(Enum):
 MovesToOneHot = {0: 0, 1: 1, 2: 11}
 CardsToOneHot = {1: 0, 2: 1, 3: 11}
 
+NUM_ACTIONS = 2
+
 class Results(Enum):
     toHighCard = 0
     toPlayer1 = 1
@@ -67,8 +69,39 @@ class KuhnPoker:
         self.permutationIndex = 0
         self.cards = self.cardsPermutations[0]
 
+    # def GetFullInfoSet(self, player):
+    #     card = self.GetPlayerCard(player)
+    #     for i in range(self.C)
+    #
+    # def GetPrettyInfoset(self):
+    #     target = self.infoSet
+    #     for action in Moves:
+    #         target = target.replace(action.value, action)
+    #
+    #     return target
+
+    def GetPlayerCard(self, player):
+        if (player == Players.one):
+            return self.cards[0]
+        else:
+            return self.cards[1]
+
+    def SaveInfoSet(self):
+        infosetBackup = self.infoSet.copy()
+        pokerEngineMoveId = self.currentMoveId
+        return infosetBackup, pokerEngineMoveId
+
+    def RestoreInfoSet(self, backupTuple):
+        self.infoSet = backupTuple[0].copy()
+        self.currentMoveId = backupTuple[1]
+
+
     def GetPlayerOneCard(self):
         return self.cards[0]
+
+    def GetCurrentPlayer(self):
+        playerId = (self.currentMoveId % 2) + 1
+        return Players(playerId)
 
     def GetPlayerTwoCard(self):
         return self.cards[1]

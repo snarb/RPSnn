@@ -121,13 +121,9 @@ def TrainModel():
 
 
 def GetStateArray(pokerEngine, player):
-    if (player == Players.one):
-        card = pokerEngine.cards[0]
-    else:
-        card = pokerEngine.cards[1]
-
+    card = pokerEngine.GetPlayerCard(player)
     carOneHot = CardsToOneHot[card]
-    mixedAr = np.append(pokerEngine.infoSet, carOneHot)
+    mixedAr = np.append(pokerEngine.infoSet, carOneHot) #rotate
     mixedAr = mixedAr.reshape((-1, len(mixedAr)))
     return mixedAr
 
@@ -178,8 +174,7 @@ def UpdateSubGraphAndGetValue(sess, pred, optimizer, Y, pokerEngine, player, gra
 
 
 def GetSubSamplingPayOff(pokerEngine, player):
-    infosetBackup = pokerEngine.infoSet.copy()
-    pokerEngineMoveId = pokerEngine.currentMoveId
+    infosetBackup = pokerEngine.SaveInfoSet()
 
     movesProbabileties = [0.33, 0.33]
     moveIds = MakeChoise(movesProbabileties, SAMPLE_SIZE)
@@ -193,8 +188,7 @@ def GetSubSamplingPayOff(pokerEngine, player):
         else:
             totalPayoff -= GetSubSamplingPayOff(pokerEngine, NextPlayer(player))
 
-        pokerEngine.infoSet = infosetBackup.copy()
-        pokerEngine.currentMoveId = pokerEngineMoveId
+        pokerEngine.RestoreInfoSet(infosetBackup)
 
     return totalPayoff
 
