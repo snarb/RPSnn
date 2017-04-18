@@ -80,6 +80,38 @@ class KuhnPoker:
     #
     #     return target
 
+    def _getInfoset(self, infoset, curPlayer):
+        card = self.GetPlayerCard(curPlayer)
+        infosetString = str(card) + " | " + str(infoset)
+        return infosetString
+
+
+    def GetInfoset(self, curPlayer):
+        return self._getInfoset(self.infoSet, curPlayer)
+
+    def GetPrettyLastMove(self, curPlayer):
+        if(self.currentMoveId == 0 and curPlayer == Players.one):
+            return str(self.GetPlayerCard(curPlayer))
+
+        lastMove = self.infoSet[self.currentMoveId - 1]
+        return str(Moves(lastMove).name)
+
+    def GetPrevInfoset(self, curPlayer):
+        # prevInfoset = self.infoSet.copy()
+
+        # if(self.currentMoveId == 0):
+        #     return str(self.GetPlayerCard(curPlayer))
+        #
+        # if(self.currentMoveId - 2 >= 0):
+        #     prevInfoset[self.currentMoveId - 2 ] = Moves.uplayed.value
+        #
+        # if (self.currentMoveId - 1 >= 0):
+        #     prevInfoset[self.currentMoveId - 1] = Moves.uplayed.value
+
+
+        prevInfoset = np.array([Moves.uplayed.value, Moves.uplayed.value, Moves.uplayed.value])
+        return self._getInfoset(prevInfoset, curPlayer)
+
     def GetPlayerCard(self, player):
         if (player == Players.one):
             return self.cards[0]
@@ -152,6 +184,7 @@ class KuhnPoker:
             retValue = 1
 
         self.cards = self.cardsPermutations[self.permutationIndex]
+        self.cards = self.cardsPermutations[len(self.cardsPermutations) - 1]
         self.InitInfoSet()
         return retValue
 

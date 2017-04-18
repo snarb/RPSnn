@@ -1,55 +1,12 @@
 from KuhnPoker import *
 from treelib import Node, Tree
-import numpy as np
-
-class CfrNode:
-    def __init__(self):
-        self.regretSum = [0.0] * NUM_ACTIONS
-        self.strategy = [0.0] * NUM_ACTIONS
-        self.strategySum = [0.0] * NUM_ACTIONS
-
-    def GetStrategy(self, realizationWeight):
-        normalizingSum = 0
-        for a in range(NUM_ACTIONS):
-            self.strategy[a] = self.regretSum[a] if self.regretSum[a] > 0 else 0
-            normalizingSum += self.strategy[a]
-
-        for a in range(NUM_ACTIONS):
-            if (normalizingSum > 0):
-                self.strategy[a] /= normalizingSum
-            else:
-                self.strategy[a] = 1.0 / NUM_ACTIONS
-                self.strategySum[a] += realizationWeight * self.strategy[a]
-
-        return self.strategy
-
-
-    def GetAverageStrategy(self):
-        avgStrategy = [] * NUM_ACTIONS
-
-        normalizingSum = 0
-        for a in range(NUM_ACTIONS):
-            normalizingSum += self.strategySum[a]
-
-        for a in range(NUM_ACTIONS):
-            if (normalizingSum > 0):
-                avgStrategy[a] = self.strategySum[a] / normalizingSum
-            else:
-                avgStrategy[a] = 1.0 / NUM_ACTIONS
-        return avgStrategy
-
+from CfrNode import CfrNode
+from GameTree import GameTree
 
 class CFRtrainer:
     def __init__(self):
-        self.playerOneTree = Tree()
-        self.playerTwoTree = Tree()
-
-        self.playerOneTree.create_node(identifier="root")
-        self.playerTwoTree.create_node(identifier="root")
-
-        self.playerOneLastNode = None
-        self.playerTwoLastNode = None
-
+        self.playerOneTree = GameTree()
+        self.playerTwoTree = GameTree()
         self.kuhn = KuhnPoker()
 
     def HasChild(self, parentId, childTag, tree):
@@ -84,26 +41,38 @@ class CFRtrainer:
         #
         # if(previousInfoset not in tree):
         #     previousInfoset = 'root'
-        lastNodeId = self.playerOneLastNode if curPlayer == Players.one else self.playerTwoLastNode
-        lastMoveId = self.kuhn.currentMoveId - 1
 
-        if(lastMoveId < 0):
-            nodeId = lastNodeId
-        else:
-            lastMove = self.kuhn.infoSet[lastMoveId]
 
-            if(self.HasChild(lastNodeId, lastMove, tree)):
-                nodeId = self.GetChildByTag(lastNodeId, lastMove, tree).identifier
-            else:
-                nodeId = tree.create_node(tag=lastMove, data=CfrNode(), parent=lastNodeId).identifier
+        # lastNodeId = self.playerOneLastNode if curPlayer == Players.one else self.playerTwoLastNode
+        # lastMoveId = self.kuhn.currentMoveId - 1
+        #
+        # if(lastMoveId < 0):
+        #     nodeId = lastNodeId
+        # else:
+        #     lastMove = self.kuhn.infoSet[lastMoveId]
+        #
+        #     if(self.HasChild(lastNodeId, lastMove, tree)):
+        #         nodeId = self.GetChildByTag(lastNodeId, lastMove, tree).identifier
+        #     else:
+        #         nodeId = tree.create_node(tag=lastMove, data=CfrNode(), parent=lastNodeId).identifier
+        #
+        #     if(curPlayer == Players.one):
+        #         self.playerOneLastNode = nodeId
+        #     else:
+        #         self.playerTwoLastNode = nodeId
 
-            if(curPlayer == Players.one):
-                self.playerOneLastNode = nodeId
-            else:
-                self.playerTwoLastNode = nodeId
+        # infoset = self.kuhn.GetInfoset(curPlayer)
+        #
+        # if (infoset in tree):
+        #     gameNode = tree[infoset]
+        # else:
+        #     gameNode = tree.AddCFRNode(infoset, self.kuhn, curPlayer)
+            #node = tree.create_node(tag=lastMove, data=CfrNode(), parent=lastNodeId).identifier
 
-        node = tree[nodeId].data
-        strategy = node.GetStrategy(curPlayerProb)
+        # cfrNode = gameNode.data
+
+        cfrNode = tree.GetOrCreateCFRNode(self.kuhn, curPlayer)
+        strategy = cfrNode.GetStrategy(curPlayerProb)
         util = [0.0] * NUM_ACTIONS
         nodeUtil = 0
 
@@ -111,7 +80,8 @@ class CFRtrainer:
 
             infosetBackup = self.kuhn.SaveInfoSet()
 
-            self.kuhn.MakeMove(Moves(MovesToOneHot[a + 1]))
+            curMove = Moves(MovesToOneHot[a + 1])
+            self.kuhn.MakeMove(curMove)
             if(curPlayer == Players.one):
                 util[a] = -self.CFR(p0 * strategy[a], p1)
             else:
@@ -125,21 +95,33 @@ class CFRtrainer:
         for a in range(NUM_ACTIONS):
             regret = util[a] - nodeUtil
             opProb = p1 if curPlayer == Players.one else p0
-            node.regretSum[a] += opProb * regret
+            cfrNode.regretSum[a] += opProb * regret
 
         return nodeUtil
 
     def Train(self):
         while (self.kuhn.NewRound() != 1):
-            self.playerOneLastNode = self.playerOneTree.create_node(tag=self.kuhn.cards[0], data = CfrNode(), parent='root').identifier
-            self.playerTwoLastNode = self.playerTwoTree.create_node(tag=self.kuhn.cards[1], parent='root').identifier
-
+            self.playerOneTree.GetOrCreateCFRNode(self.kuhn, Players.one)
+            self.playerTwoTree.GetOrCreateCFRNode(self.kuhn, Players.one)
             self.CFR(1, 1)
 
 
 trainer = CFRtrainer()
-for i in range(100):
+for i in range(1000):
     trainer.Train()
+
+print("Player one avg strategy:")
+trainer.playerOneTree.PrintAvgStrategy()
+print("Player one best resp strategy:")
+trainer.playerOneTree.PrintBestResp()
+
+print("----------------------")
+print("Player two avg strategy:")
+trainer.playerTwoTree.PrintAvgStrategy()
+print("Player two best resp strategy:")
+trainer.playerTwoTree.PrintBestResp()
+
+
 
 print("done")
 
