@@ -84,5 +84,10 @@ class TestStringMethods(unittest.TestCase):
         self.assertTrue(kn.GetPayoff(player=Players.one) == 2)
 
 
+    def test_prev_infoset(self):
+        kn = KuhnPoker()
+        infoset = kn.GetPrevInfoset(Players.one)
+
+
 if __name__ == '__main__':
     unittest.main()

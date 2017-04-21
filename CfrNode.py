@@ -1,10 +1,11 @@
 from KuhnPoker import *
 
 class CfrNode:
-    def __init__(self):
+    def __init__(self, infoset):
         self.regretSum = [0.0] * NUM_ACTIONS
         self.strategy = [0.0] * NUM_ACTIONS
         self.strategySum = [0.0] * NUM_ACTIONS
+        self.infoset = infoset
 
     def GetStrategy(self, realizationWeight):
         normalizingSum = 0

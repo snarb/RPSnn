@@ -12,8 +12,10 @@ class Moves(Enum):
     pas = 1
     bet = 11
 
+#list(map(int, Color))
 MovesToOneHot = {0: 0, 1: 1, 2: 11}
 CardsToOneHot = {1: 0, 2: 1, 3: 11}
+
 
 NUM_ACTIONS = 2
 
@@ -67,7 +69,7 @@ class KuhnPoker:
             self.cardsPermutations.append(deck)
 
         self.permutationIndex = 0
-        self.cards = self.cardsPermutations[0]
+        self.cards = None
 
     # def GetFullInfoSet(self, player):
     #     card = self.GetPlayerCard(player)
@@ -96,20 +98,24 @@ class KuhnPoker:
         lastMove = self.infoSet[self.currentMoveId - 1]
         return str(Moves(lastMove).name)
 
+    def PrintInfoset(self):
+        infoset = Moves(self.infoSet[0]).name + ";" + Moves(self.infoSet[1]).name + ";" + Moves(self.infoSet[2]).name
+        return infoset
+
     def GetPrevInfoset(self, curPlayer):
-        # prevInfoset = self.infoSet.copy()
+        if(cself.ards)
 
-        # if(self.currentMoveId == 0):
-        #     return str(self.GetPlayerCard(curPlayer))
-        #
-        # if(self.currentMoveId - 2 >= 0):
-        #     prevInfoset[self.currentMoveId - 2 ] = Moves.uplayed.value
-        #
-        # if (self.currentMoveId - 1 >= 0):
-        #     prevInfoset[self.currentMoveId - 1] = Moves.uplayed.value
+        prevInfoset = self.infoSet.copy()
 
+        if(self.currentMoveId == 0):
+            return str(self.GetPlayerCard(curPlayer))
 
-        prevInfoset = np.array([Moves.uplayed.value, Moves.uplayed.value, Moves.uplayed.value])
+        if(self.currentMoveId >= 1):
+            prevInfoset[0] = Moves.uplayed.value
+
+        if (self.currentMoveId == 2):
+            prevInfoset[1] = Moves.uplayed.value
+
         return self._getInfoset(prevInfoset, curPlayer)
 
     def GetPlayerCard(self, player):
@@ -126,7 +132,6 @@ class KuhnPoker:
     def RestoreInfoSet(self, backupTuple):
         self.infoSet = backupTuple[0].copy()
         self.currentMoveId = backupTuple[1]
-
 
     def GetPlayerOneCard(self):
         return self.cards[0]
@@ -178,13 +183,14 @@ class KuhnPoker:
     def NewRound(self):
         retValue = 0
 
-        self.permutationIndex += 1
-        if(self.permutationIndex >= len(self.cardsPermutations)):
-            self.permutationIndex = 0
-            retValue = 1
 
-        self.cards = self.cardsPermutations[self.permutationIndex]
-        self.cards = self.cardsPermutations[len(self.cardsPermutations) - 1]
+        # if(self.permutationIndex >= len(self.cardsPermutations)):
+        #     self.permutationIndex = 0
+        #     retValue = 1
+        #
+        # self.cards = self.cardsPermutations[self.permutationIndex]
+        # self.permutationIndex += 1
+        self.cards = self.cardsPermutations[len(self.cardsPermutations) - 1] #ToDO: REMOVE!!!!!! Temp!!!!!!
         self.InitInfoSet()
         return retValue
 

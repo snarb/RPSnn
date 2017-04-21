@@ -70,44 +70,59 @@ class CFRtrainer:
             #node = tree.create_node(tag=lastMove, data=CfrNode(), parent=lastNodeId).identifier
 
         # cfrNode = gameNode.data
+        #'2 | [0 0 0]'
 
         cfrNode = tree.GetOrCreateCFRNode(self.kuhn, curPlayer)
         strategy = cfrNode.GetStrategy(curPlayerProb)
         util = [0.0] * NUM_ACTIONS
         nodeUtil = 0
 
-        for a in range(NUM_ACTIONS):
-
+        for action in range(NUM_ACTIONS):
             infosetBackup = self.kuhn.SaveInfoSet()
-
-            curMove = Moves(MovesToOneHot[a + 1])
+            curMove = Moves(MovesToOneHot[action + 1])
             self.kuhn.MakeMove(curMove)
-            if(curPlayer == Players.one):
-                util[a] = -self.CFR(p0 * strategy[a], p1)
-            else:
-                util[a] = -self.CFR(p0, p1 * strategy[a])
 
-            nodeUtil += strategy[a] * util[a]
+            if(curPlayer == Players.one):
+                util[action] = -self.CFR(p0 * strategy[action], p1)
+            else:
+                util[action] = -self.CFR(p0, p1 * strategy[action])
+
+            nodeUtil += strategy[action] * util[action]
 
             self.kuhn.RestoreInfoSet(infosetBackup)
 
-
-        for a in range(NUM_ACTIONS):
-            regret = util[a] - nodeUtil
+        for action in range(NUM_ACTIONS):
+            regret = util[action] - nodeUtil
             opProb = p1 if curPlayer == Players.one else p0
-            cfrNode.regretSum[a] += opProb * regret
+            cfrNode.regretSum[action] += opProb * regret
+            if(cfrNode.infoset == '2 | [0 0 0]'):
+                print(cfrNode.infoset)
 
         return nodeUtil
 
     def Train(self):
-        while (self.kuhn.NewRound() != 1):
-            self.playerOneTree.GetOrCreateCFRNode(self.kuhn, Players.one)
-            self.playerTwoTree.GetOrCreateCFRNode(self.kuhn, Players.one)
-            self.CFR(1, 1)
+        util = 0
+        cnt = 0
+
+        # self.playerOneTree.GetOrCreateCFRNode(self.kuhn, Players.one)
+        # self.playerTwoTree.GetOrCreateCFRNode(self.kuhn, Players.one)
+
+        # while (self.kuhn.NewRound() != 1):
+        #     util += self.CFR(1, 1)
+        #     cnt += 1
+        #     if(cnt % 10 == 0):
+        #         print(util / cnt)
+
+        for i in range(500):
+            self.kuhn.NewRound()
+            util += self.CFR(1, 1)
+            cnt += 1
+            if(cnt % 10 == 0):
+                print(util / cnt)
 
 
 trainer = CFRtrainer()
-for i in range(1000):
+for i in range(1):
     trainer.Train()
 
 print("Player one avg strategy:")

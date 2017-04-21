@@ -36,10 +36,10 @@ class GameTree:
 
         if (prevInfoset not in self.tree):
             prevTag = str(kuhnEngine.GetPlayerCard(curPlayer))
-            return self.tree.create_node(identifier=prevInfoset, tag=prevTag, data=CfrNode(), parent="GameTree").data
+            return self.tree.create_node(identifier=prevInfoset, tag=prevTag, data=CfrNode(infoset), parent="GameTree").data
 
         if (infoset != prevInfoset):
-            return self.tree.create_node(identifier=infoset, tag=tag, data=CfrNode(), parent=prevInfoset).data
+            return self.tree.create_node(identifier=infoset, tag=tag, data=CfrNode(infoset), parent=prevInfoset).data
 
 
     def __getitem__(self, key):
