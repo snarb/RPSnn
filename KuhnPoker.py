@@ -35,17 +35,12 @@ def NextPlayer(currentPlayer):
 class KuhnPoker:
     @staticmethod
     def JoinMoves(moves):
-        res = np.array_str(moves)
+        res = ";".join(move.name for move in moves)
         return res
 
-    @staticmethod
-    def GetInfoSet(moves):
-        infoSet = KuhnPoker.JoinMoves(moves)
-        return infoSet
-
     def AddToPayoffTable(self, result, moves):
-        infoSet = KuhnPoker.GetInfoSet(np.array([move.value for move in moves]))
-        self.payoffTable[infoSet] = result
+        movesStr = KuhnPoker.JoinMoves(moves)
+        self.payoffTable[movesStr] = result
 
     def InitPayoffTable(self):
         self.AddToPayoffTable([Results.toHighCard, 1], [Moves.pas, Moves.pas, Moves.uplayed])
@@ -54,15 +49,15 @@ class KuhnPoker:
         self.AddToPayoffTable([Results.toPlayer1, 1],  [Moves.bet, Moves.pas, Moves.uplayed])
         self.AddToPayoffTable([Results.toHighCard, 2], [Moves.bet, Moves.bet, Moves.uplayed])
 
-    def InitInfoSet(self):
-        self.infoSet =  np.array([Moves.uplayed.value, Moves.uplayed.value, Moves.uplayed.value])
+    def InitMovesSet(self):
+        self.moves =  np.array([Moves.uplayed.value, Moves.uplayed.value, Moves.uplayed.value])
         self.currentMoveId = 0
 
     def __init__(self):
         self.PayoffCount = 0
         self.payoffTable = {}
         self.InitPayoffTable()
-        self.InitInfoSet()
+        self.InitMovesSet()
 
         self.cardsPermutations = []
         for deck in itertools.permutations(CARDS):
@@ -82,55 +77,70 @@ class KuhnPoker:
     #
     #     return target
 
-    def _getInfoset(self, infoset, curPlayer):
+    def MovesToStr(self, movesValuesArray):
+        return KuhnPoker.JoinMoves([Moves(move) for move in movesValuesArray])
+
+    def _getInfoset(self, moves, curPlayer):
         card = self.GetPlayerCard(curPlayer)
-        infosetString = str(card) + " | " + str(infoset)
+        infosetString = str(card) + " | " + self.MovesToStr(moves)
         return infosetString
 
-
     def GetInfoset(self, curPlayer):
-        return self._getInfoset(self.infoSet, curPlayer)
+        return self._getInfoset(self.moves, curPlayer)
 
-    def GetPrettyLastMove(self, curPlayer):
-        if(self.currentMoveId == 0 and curPlayer == Players.one):
-            return str(self.GetPlayerCard(curPlayer))
-
-        lastMove = self.infoSet[self.currentMoveId - 1]
-        return str(Moves(lastMove).name)
-
-    def PrintInfoset(self):
-        infoset = Moves(self.infoSet[0]).name + ";" + Moves(self.infoSet[1]).name + ";" + Moves(self.infoSet[2]).name
-        return infoset
+    def GetLastSubState(self, curPlayer):
+        if (curPlayer == Players.one):
+            if(self.currentMoveId == 0):
+                return str(self.GetPlayerCard(curPlayer))
+            elif(self.currentMoveId == 2):
+                lastMove = self.moves[self.currentMoveId - 1]
+                return str(Moves(lastMove).name)
+            else:
+                raise ValueError("Call in incorrect currentMoveId")
+        else:
+             if (self.currentMoveId == 1):
+                 lastMove = self.moves[self.currentMoveId - 1]
+                 lastMoveStr = self._getInfoset([lastMove], curPlayer)
+                 return lastMoveStr
+             else:
+                raise ValueError("Call in incorrect currentMoveId")
 
     def GetPrevInfoset(self, curPlayer):
-        if(cself.ards)
+        prevInfoset = self.moves.copy()
 
-        prevInfoset = self.infoSet.copy()
+        if (curPlayer == Players.one):
+            if(self.currentMoveId == 0):
+                return "GameTree"
+            if(self.currentMoveId == 2):
+                prevInfoset[self.currentMoveId - 1] = Moves.uplayed.value
+                prevInfoset[self.currentMoveId - 2] = Moves.uplayed.value
+            else:
+                raise ValueError("Call in incorrect currentMoveId")
 
-        if(self.currentMoveId == 0):
-            return str(self.GetPlayerCard(curPlayer))
-
-        if(self.currentMoveId >= 1):
-            prevInfoset[0] = Moves.uplayed.value
-
-        if (self.currentMoveId == 2):
-            prevInfoset[1] = Moves.uplayed.value
+        else:
+            if (self.currentMoveId == 1):
+                return "GameTree"
+            else:
+                raise ValueError("Call in incorrect currentMoveId")
 
         return self._getInfoset(prevInfoset, curPlayer)
 
     def GetPlayerCard(self, player):
+        if(not self.cards):
+            raise ValueError("Round not started")
+
         if (player == Players.one):
             return self.cards[0]
         else:
             return self.cards[1]
 
     def SaveInfoSet(self):
-        infosetBackup = self.infoSet.copy()
+        infosetBackup = self.moves.copy()
         pokerEngineMoveId = self.currentMoveId
         return infosetBackup, pokerEngineMoveId
 
     def RestoreInfoSet(self, backupTuple):
-        self.infoSet = backupTuple[0].copy()
+        self.moves = backupTuple[0].copy()
         self.currentMoveId = backupTuple[1]
 
     def GetPlayerOneCard(self):
@@ -144,10 +154,8 @@ class KuhnPoker:
         return self.cards[1]
 
     def IsTerminateState(self):
-        return self.GetStringInfoset() in self.payoffTable
-
-    def GetStringInfoset(self):
-        return np.array_str(self.infoSet)
+        moves = self.MovesToStr(self.moves)
+        return moves in self.payoffTable
 
     def GetPayoff(self, player):
         self.PayoffCount += 1
@@ -158,7 +166,8 @@ class KuhnPoker:
         if(cardOne == cardTwo):
             raise ValueError("The same cards")
 
-        result = self.payoffTable[self.GetStringInfoset()]
+        movesStr = self.MovesToStr(self.moves)
+        result = self.payoffTable[movesStr]
 
         winner = result[0]
         reward = result[1]
@@ -182,16 +191,14 @@ class KuhnPoker:
 
     def NewRound(self):
         retValue = 0
+        self.cards = self.cardsPermutations[self.permutationIndex]
+        self.permutationIndex += 1
+        if(self.permutationIndex >= len(self.cardsPermutations)):
+            self.permutationIndex = 0
+            retValue = 1
 
-
-        # if(self.permutationIndex >= len(self.cardsPermutations)):
-        #     self.permutationIndex = 0
-        #     retValue = 1
-        #
-        # self.cards = self.cardsPermutations[self.permutationIndex]
-        # self.permutationIndex += 1
-        self.cards = self.cardsPermutations[len(self.cardsPermutations) - 1] #ToDO: REMOVE!!!!!! Temp!!!!!!
-        self.InitInfoSet()
+        #self.cards = self.cardsPermutations[len(self.cardsPermutations) - 1] #ToDO: REMOVE!!!!!! Temp!!!!!!
+        self.InitMovesSet()
         return retValue
 
 
@@ -199,10 +206,13 @@ class KuhnPoker:
         self.MakeOneHotMove(move.value)
 
     def MakeOneHotMove(self, adHocMove):
-        if(self.currentMoveId >= len(self.infoSet)):
+        if (not self.cards):
+            raise ValueError("Round not started")
+
+        if(self.currentMoveId >= len(self.moves)):
             ValueError("To much moves!")
 
-        self.infoSet[self.currentMoveId] = adHocMove
+        self.moves[self.currentMoveId] = adHocMove
         self.currentMoveId += 1
 
 

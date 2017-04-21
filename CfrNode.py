@@ -18,7 +18,8 @@ class CfrNode:
                 self.strategy[a] /= normalizingSum
             else:
                 self.strategy[a] = 1.0 / NUM_ACTIONS
-                self.strategySum[a] += realizationWeight * self.strategy[a]
+
+            self.strategySum[a] += realizationWeight * self.strategy[a]
 
         return self.strategy
 
