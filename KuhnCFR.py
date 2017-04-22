@@ -2,6 +2,7 @@ from KuhnPoker import *
 from treelib import Node, Tree
 from CfrNode import CfrNode
 from GameTree import GameTree
+from matplotlib import pyplot as plt
 
 class CFRtrainer:
     def __init__(self):
@@ -9,19 +10,19 @@ class CFRtrainer:
         self.playerTwoTree = GameTree()
         self.kuhn = KuhnPoker()
 
-    def HasChild(self, parentId, childTag, tree):
-        if(self.GetChildByTag(parentId, childTag, tree)):
-            return True
-
-        return False
-
-    def GetChildByTag(self, parentId, childTag, tree):
-        for childId in  tree.children(parentId):
-            childNode = tree[childId]
-            if(childNode.tag == childTag):
-                return childNode
-
-        return None
+    # def HasChild(self, parentId, childTag, tree):
+    #     if(self.GetChildByTag(parentId, childTag, tree)):
+    #         return True
+    #
+    #     return False
+    #
+    # def GetChildByTag(self, parentId, childTag, tree):
+    #     for childId in  tree.children(parentId):
+    #         childNode = tree[childId]
+    #         if(childNode.tag == childTag):
+    #             return childNode
+    #
+    #     return None
 
     def CFR(self, p0, p1):
         curPlayer = self.kuhn.GetCurrentPlayer()
@@ -71,13 +72,19 @@ class CFRtrainer:
         #     cnt += 1
         #     if(cnt % 10 == 0):
         #         print(util / cnt)
+        results = []
 
-        for i in range(1000):
+        for i in range(1, 1000):
             self.kuhn.NewRound()
             util += self.CFR(1, 1)
-            cnt += 1
             if(cnt % 100 == 0):
-                print(util / cnt)
+                results.append(util / i)
+
+
+                # print(i, util / i)
+
+        plt.plot(results)
+        plt.show()
 
 
 trainer = CFRtrainer()

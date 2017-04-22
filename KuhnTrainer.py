@@ -6,7 +6,6 @@ rng = numpy.random
 import numpy as np
 import math
 import copy
-from sklearn.preprocessing import normalize
 from KuhnPoker import KuhnPoker, Players, Moves, Results, NextPlayer, MovesToOneHot, CardsToOneHot
 #numpy.random.seed(12)
 
