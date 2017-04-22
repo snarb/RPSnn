@@ -6,8 +6,8 @@ from matplotlib import pyplot as plt
 
 class CFRtrainer:
     def __init__(self):
-        self.playerOneTree = GameTree()
-        self.playerTwoTree = GameTree()
+        self.playerOneTree = GameTree(CfrNode)
+        self.playerTwoTree = GameTree(CfrNode)
         self.kuhn = KuhnPoker()
 
     # def HasChild(self, parentId, childTag, tree):
@@ -26,13 +26,13 @@ class CFRtrainer:
 
     def CFR(self, p0, p1):
         curPlayer = self.kuhn.GetCurrentPlayer()
-        curPlayerProb = p0 if curPlayer == Players.one else p1
-        tree = self.playerOneTree if curPlayer == Players.one else self.playerTwoTree
 
         if(self.kuhn.IsTerminateState()):
             return self.kuhn.GetPayoff(curPlayer)
 
-        cfrNode = tree.GetOrCreateCFRNode(self.kuhn, curPlayer)
+        curPlayerProb = p0 if curPlayer == Players.one else p1
+        tree = self.playerOneTree if curPlayer == Players.one else self.playerTwoTree
+        cfrNode = tree.GetOrCreateDataNode(self.kuhn, curPlayer)
         strategy = cfrNode.GetStrategy(curPlayerProb)
         util = [0.0] * NUM_ACTIONS
         nodeUtil = 0
@@ -41,8 +41,7 @@ class CFRtrainer:
 
         for action in range(NUM_ACTIONS):
             infosetBackup = self.kuhn.SaveInfoSet()
-            curMove = Moves(MovesToOneHot[action + 1])
-            self.kuhn.MakeMove(curMove)
+            self.kuhn.MakeAction(action)
 
             if(curPlayer == Players.one):
                 util[action] = -self.CFR(p0 * strategy[action], p1)
@@ -80,16 +79,15 @@ class CFRtrainer:
             if(cnt % 100 == 0):
                 results.append(util / i)
 
-
-                # print(i, util / i)
-
+        print("Avg util:", util / i)
         plt.plot(results)
         plt.show()
 
 
+
+
 trainer = CFRtrainer()
-for i in range(1):
-    trainer.Train()
+trainer.Train()
 
 print("Player one avg strategy:")
 trainer.playerOneTree.PrintAvgStrategy()

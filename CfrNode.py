@@ -7,6 +7,8 @@ class CfrNode:
         self.strategySum = [0.0] * NUM_ACTIONS
         self.infoset = infoset
 
+        self.policies = [0.0] * NUM_ACTIONS
+
     def GetStrategy(self, realizationWeight):
         normalizingSum = 0
         for a in range(NUM_ACTIONS):

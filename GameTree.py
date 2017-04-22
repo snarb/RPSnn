@@ -5,9 +5,10 @@ from copy import deepcopy
 import numpy as np
 
 class GameTree:
-    def __init__(self):
+    def __init__(self, nodeType):
         self.tree = Tree()
         self.tree.create_node(identifier="GameTree")
+        self.nodeType = nodeType
 
     # def _addNode(self, nodeName, data, parent):
     #     if(parent):
@@ -25,7 +26,7 @@ class GameTree:
     #     # return self._addNode(stateName, StateNode(stateName), parent=parent)
     #     return self.tree.create_node(identifier=infostate, data=StateNode(infostate), parent="root").data
 
-    def GetOrCreateCFRNode(self, kuhnEngine, curPlayer):
+    def GetOrCreateDataNode(self, kuhnEngine, curPlayer):
         infoset = kuhnEngine.GetInfoset(curPlayer)
 
         if (infoset in self.tree):
@@ -34,7 +35,7 @@ class GameTree:
         tag = kuhnEngine.GetLastSubState(curPlayer)
         prevInfoset = kuhnEngine.GetPrevInfoset(curPlayer)
 
-        return self.tree.create_node(identifier=infoset, tag=tag, data=CfrNode(infoset), parent=prevInfoset).data
+        return self.tree.create_node(identifier=infoset, tag=tag, data=self.nodeType(infoset), parent=prevInfoset).data
 
 
     def __getitem__(self, key):

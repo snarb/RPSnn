@@ -201,6 +201,10 @@ class KuhnPoker:
         self.InitMovesSet()
         return retValue
 
+    # Make move from action 0 - pas; 1 - bet
+    def MakeAction(self, action):
+        curMove = Moves(MovesToOneHot[action + 1])
+        self.MakeMove(curMove)
 
     def MakeMove(self, move):
         self.MakeOneHotMove(move.value)

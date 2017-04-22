@@ -7,17 +7,9 @@ import numpy as np
 import math
 import copy
 from KuhnPoker import KuhnPoker, Players, Moves, Results, NextPlayer, MovesToOneHot, CardsToOneHot
+from Utils import *
 #numpy.random.seed(12)
 
-def Normalise(v):
-    norm=np.linalg.norm(v, ord=1)
-    if norm==0:
-        norm=np.finfo(v.dtype).eps
-    return v/norm
-
-def MakeChoise(dist, batchSize):
-    dist = Normalise(dist)
-    return np.random.choice(len(dist), batchSize, p=dist)
 
 # Parameters
 learning_rate = 1e-4
@@ -140,12 +132,12 @@ def UpdateSubGraphAndGetValue(sess, pred, optimizer, Y, pokerEngine, player, gra
     sampleSize = SAMPLE_SIZE * graphProb
     if(sampleSize < 1):
         if(random.random() < sampleSize):
-            moveIds = MakeChoise(movesProbabileties, 1)
+            moveIds = MakeNormChoise(movesProbabileties, 1)
         else:
             moveIds = np.array([])
     else:
         sampleSize = round(sampleSize)
-        moveIds = MakeChoise(movesProbabileties, sampleSize)
+        moveIds = MakeNormChoise(movesProbabileties, sampleSize)
 
     totalPayoff = 0
     for moveId in moveIds:
@@ -176,7 +168,7 @@ def GetSubSamplingPayOff(pokerEngine, player):
     infosetBackup = pokerEngine.SaveInfoSet()
 
     movesProbabileties = [0.33, 0.33]
-    moveIds = MakeChoise(movesProbabileties, SAMPLE_SIZE)
+    moveIds = MakeNormChoise(movesProbabileties, SAMPLE_SIZE)
 
     totalPayoff = 0
     for moveId in moveIds:
