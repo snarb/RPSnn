@@ -9,8 +9,9 @@ from matplotlib import pyplot as plt
 from Qlnode import Qlnode
 
 class QLtrainer:
-    ALPHA = 0.05
-    BETA = 0.001
+    ALPHA = 1
+    BETA = 0.05
+    SAMPLE_SIZE = 10
 
     def __init__(self):
         self.playerOneTree = GameTree(Qlnode)
@@ -28,28 +29,51 @@ class QLtrainer:
         dataNode = tree.GetOrCreateDataNode(self.kuhn, curPlayer)
 
         infosetStr = self.kuhn.GetInfoset(curPlayer)
-        infosetBackup = self.kuhn.SaveInfoSet()
-
-
         if (random.random() < QLtrainer.BETA):
             strategy = np.array([0.5] * NUM_ACTIONS)
         else:
-            strategy = dataNode.strategies
+            strategy = dataNode.strategy
 
-        action = Utils.MakeChoise(strategy, 1)[0]
-        self.kuhn.MakeAction(action)
+        sampleSize = max(int(round(QLtrainer.SAMPLE_SIZE * p0 * p1)), 1)
 
-        if (curPlayer == Players.one):
-            util = -self.GetNodeValue(p0 * strategy[action], p1)
-        else:
-            util = -self.GetNodeValue(p0, p1 * strategy[action])
+        actions = Utils.MakeChoise(strategy, sampleSize)
 
-        strategy[action] *= (1 + util * QLtrainer.ALPHA * curPlayerProb) # ToDo: Gradient? Gradient of regret? Do I need * curPlayerProb???!!!
-        dataNode.strategies = Utils.Normalise(strategy)
+        util = [0.0] * NUM_ACTIONS
+        nodeUtil = 0
 
-        self.kuhn.RestoreInfoSet(infosetBackup)
+        infosetBackup = self.kuhn.SaveInfoSet()
 
-        return util
+        for action in actions:
+
+            self.kuhn.MakeAction(action)
+
+            if (curPlayer == Players.one):
+                util[action] = -self.GetNodeValue(p0 * strategy[action], p1)
+            else:
+                util[action] = -self.GetNodeValue(p0, p1 * strategy[action])
+
+            nodeUtil += strategy[action] * util[action]
+
+            self.kuhn.RestoreInfoSet(infosetBackup)
+
+        regrets = [0.0] * NUM_ACTIONS
+
+        for action in range(NUM_ACTIONS):
+            regret = util[action] - nodeUtil
+            opProb = p1 if curPlayer == Players.one else p0
+            #cfrNode.regretSum[action] += opProb * regret
+            regrets[action] = regret * opProb
+            #strategy[action] *= (1 + util * QLtrainer.ALPHA * curPlayerProb) # ToDo: Gradient? Gradient of regret? Do I need * curPlayerProb???!!!
+            #strategy[action] +=  regret * QLtrainer.ALPHA * opProb # ToDo: Gradient? Gradient of regret? Do I need * curPlayerProb???!!!
+            #strategy[action] = max(strategy[action], 0)
+
+        regrets= Utils.Normalise(regrets)
+
+        dataNode.strategy = Utils.Normalise(strategy)
+
+
+
+        return nodeUtil / len(actions)
 
 
     def Train(self):
@@ -63,7 +87,11 @@ class QLtrainer:
             if(cnt % 100 == 0):
                 results.append(util / i)
 
+            # QLtrainer.ALPHA *= 0.999
+            # QLtrainer.BETA *= 0.999
+
         print("Avg util:", util / i)
+        # print(QLtrainer.ALPHA, QLtrainer.BETA)
         plt.plot(results)
         plt.show()
 
@@ -73,21 +101,13 @@ class QLtrainer:
 trainer = QLtrainer()
 trainer.Train()
 
-# print("Player one avg strategy:")
-# trainer.playerOneTree.PrintAvgStrategy()
-# print("Player one best resp strategy:")
-# trainer.playerOneTree.PrintBestResp()
-# print("Player one regrets:")
-# trainer.playerOneTree.PrintRegrets()
-#
-#
-# print("----------------------")
-# print("Player two avg strategy:")
-# trainer.playerTwoTree.PrintAvgStrategy()
-# print("Player two best resp strategy:")
-# trainer.playerTwoTree.PrintBestResp()
-# print("Player two regrets:")
-# trainer.playerTwoTree.PrintRegrets()
+
+
+print("Player one strategy:")
+trainer.playerOneTree.PrintStrategy()
+
+print("Player two strategy:")
+trainer.playerTwoTree.PrintStrategy()
 
 
 print("done")

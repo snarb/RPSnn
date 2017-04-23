@@ -9,6 +9,7 @@ class GameTree:
         self.tree = Tree()
         self.tree.create_node(identifier="GameTree")
         self.nodeType = nodeType
+        np.set_printoptions(precision=2, suppress=True)
 
     # def _addNode(self, nodeName, data, parent):
     #     if(parent):
