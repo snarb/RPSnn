@@ -15,7 +15,13 @@ class CFRtrainer:
         self.playerTwoTree = GameTree(CfrNode)
         self.kuhn = KuhnPoker()
 
-    def CFR(self, p0, p1):
+    # def UpdateUtil(self, curPlayer, util, strategy, action, p0, p1, isP1Freeze):
+    #     if (curPlayer == Players.one):
+    #         util[action] = -self.CFR(p0 * strategy[action], p1, isP1Freeze)
+    #     else:
+    #         util[action] = -self.CFR(p0, p1 * strategy[action], isP1Freeze)
+
+    def CFR(self, p0, p1, isCurPlayerFreez):
         curPlayer = self.kuhn.GetCurrentPlayer()
 
         if(self.kuhn.IsTerminateState()):
@@ -44,11 +50,11 @@ class CFRtrainer:
         for action in actions:
             infosetBackup = self.kuhn.SaveInfoSet()
             self.kuhn.MakeAction(action)
-
-            if(curPlayer == Players.one):
-                util[action] = -self.CFR(p0 * strategy[action], p1)
+            #self.UpdateUtil(curPlayer, util, strategy, action, p0, p1, isP1Freeze)
+            if (curPlayer == Players.one):
+                util[action] = -self.CFR(p0 * strategy[action], p1, not isCurPlayerFreez)
             else:
-                util[action] = -self.CFR(p0, p1 * strategy[action])
+                util[action] = -self.CFR(p0, p1 * strategy[action], not isCurPlayerFreez)
 
             repsCount[action] += 1
 
@@ -59,10 +65,17 @@ class CFRtrainer:
                 util[action] /= repsCount[action]
                 nodeUtil += strategy[action] * util[action]
 
-        for action in range(NUM_ACTIONS):
-            regret = util[action] - nodeUtil
-            opProb = p1 if curPlayer == Players.one else p0
-            cfrNode.regretSum[action] += opProb * regret
+        opProb = p1 if curPlayer == Players.one else p0
+        if (isCurPlayerFreez):
+            for action in range(NUM_ACTIONS):
+                regret = util[action] - nodeUtil
+                cfrNode.nextRegretSum[action] += opProb * regret
+        else:
+            for action in range(NUM_ACTIONS):
+                regret = util[action] - nodeUtil
+                cfrNode.regretSum[action] += opProb * regret
+                cfrNode.regretSum[action] += cfrNode.nextRegretSum[action]
+                cfrNode.nextRegretSum[action] = 0
 
         return nodeUtil
 

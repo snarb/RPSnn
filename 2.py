@@ -38,9 +38,12 @@ class CFRtrainer:
         nodeUtil = 0
 
         infosetStr = self.kuhn.GetInfoset(curPlayer)
+        infosetBackup = self.kuhn.SaveInfoSet()
+
+        if(('3 | pas' in infosetStr) and curPlayer == Players.two):
+            g = 6
 
         for action in range(NUM_ACTIONS):
-            infosetBackup = self.kuhn.SaveInfoSet()
             self.kuhn.MakeAction(action)
 
             if(curPlayer == Players.one):
@@ -52,11 +55,23 @@ class CFRtrainer:
 
             self.kuhn.RestoreInfoSet(infosetBackup)
 
+        # gamma = 0.95
+        # if(cfrNode.TotalUtil  > 0):
+        #     cfrNode.TotalUtil = (gamma * cfrNode.TotalUtil  + (1 - gamma) * nodeUtil) / 2
+        # else:
+        #     cfrNode.TotalUtil = nodeUtil
+        cfrNode.TotalUtil += nodeUtil
+
+        cfrNode.utilsCount += 1
+
         for action in range(NUM_ACTIONS):
             regret = util[action] - nodeUtil
             opProb = p1 if curPlayer == Players.one else p0
             cfrNode.regretSum[action] += opProb * regret
 
+
+
+#0445733333
         return nodeUtil
 
     def Train(self):
@@ -73,7 +88,7 @@ class CFRtrainer:
         #         print(util / cnt)
         results = []
 
-        for i in range(1, 1000):
+        for i in range(1, 10000):
             self.kuhn.NewRound()
             util += self.CFR(1, 1)
             if(cnt % 100 == 0):

@@ -1,14 +1,51 @@
 from KuhnPoker import *
+import Utils
 
 class CfrNode:
     def __init__(self, infoset):
         self.regretSum = [0.0] * NUM_ACTIONS
+        self.nextRegretSum = [0.0] * NUM_ACTIONS
+        self.util = [0.0] * NUM_ACTIONS
         self.strategy = [0.0] * NUM_ACTIONS
         self.strategySum = [0.0] * NUM_ACTIONS
         self.infoset = infoset
 
         self.utilsCount = 0
         self.TotalUtil = 0
+
+    def GetUtilStrategy(self):
+
+        utilsSum = 0
+        for action in range(NUM_ACTIONS):
+            utilsSum += self.util[action]
+
+        for action in range(NUM_ACTIONS):
+            regret = self.util[action] - utilsSum
+            self.util[action] = 0
+            self.regretSum[action] += regret
+
+        # normalizingSum = np.sum(self.regretSum)
+        # if (normalizingSum == 0):
+        #     self.strategy = [1.0 / NUM_ACTIONS] * NUM_ACTIONS
+        # else:
+        #     self.strategy = self.regretSum / normalizingSum
+        #
+        # return self.strategy
+
+        normalizingSum = 0
+        for a in range(NUM_ACTIONS):
+            self.strategy[a] = self.regretSum[a] if self.regretSum[a] > 0 else 0
+            normalizingSum += self.strategy[a]
+
+        for a in range(NUM_ACTIONS):
+            if (normalizingSum > 0):
+                self.strategy[a] /= normalizingSum
+            else:
+                self.strategy[a] = 1.0 / NUM_ACTIONS
+
+            self.strategySum[a] += self.strategy[a]
+
+        return self.strategy
 
     def GetStrategy(self, realizationWeight):
         normalizingSum = 0

@@ -38,9 +38,12 @@ class CFRtrainer:
         nodeUtil = 0
 
         infosetStr = self.kuhn.GetInfoset(curPlayer)
+        infosetBackup = self.kuhn.SaveInfoSet()
+
+        if(('3 | pas' in infosetStr) and curPlayer == Players.two):
+            g = 6
 
         for action in range(NUM_ACTIONS):
-            infosetBackup = self.kuhn.SaveInfoSet()
             self.kuhn.MakeAction(action)
 
             if(curPlayer == Players.one):
@@ -52,20 +55,11 @@ class CFRtrainer:
 
             self.kuhn.RestoreInfoSet(infosetBackup)
 
-        if(cfrNode.utilsCount == 0):
-            avgUtil = 0
-        else:
-            avgUtil = cfrNode.TotalUtil / cfrNode.utilsCount / NUM_ACTIONS
-            #print(avgUtil, nodeUtil)
-
         for action in range(NUM_ACTIONS):
             regret = util[action] - nodeUtil
             opProb = p1 if curPlayer == Players.one else p0
             cfrNode.regretSum[action] += opProb * regret
 
-
-        cfrNode.TotalUtil += nodeUtil
-        cfrNode.utilsCount += 1
 
 
 #0445733333
@@ -98,25 +92,25 @@ class CFRtrainer:
 
 
 
-trainer = CFRtrainer()
-trainer.Train()
-
-print("Player one avg strategy:")
-trainer.playerOneTree.PrintAvgStrategy()
-print("Player one best resp strategy:")
-trainer.playerOneTree.PrintBestResp()
-print("Player one regrets:")
-trainer.playerOneTree.PrintRegrets()
-
-
-print("----------------------")
-print("Player two avg strategy:")
-trainer.playerTwoTree.PrintAvgStrategy()
-print("Player two best resp strategy:")
-trainer.playerTwoTree.PrintBestResp()
-print("Player two regrets:")
-trainer.playerTwoTree.PrintRegrets()
-
-
-print("done")
+# trainer = CFRtrainer()
+# trainer.Train()
+#
+# print("Player one avg strategy:")
+# trainer.playerOneTree.PrintAvgStrategy()
+# print("Player one best resp strategy:")
+# trainer.playerOneTree.PrintBestResp()
+# print("Player one regrets:")
+# trainer.playerOneTree.PrintRegrets()
+#
+#
+# print("----------------------")
+# print("Player two avg strategy:")
+# trainer.playerTwoTree.PrintAvgStrategy()
+# print("Player two best resp strategy:")
+# trainer.playerTwoTree.PrintBestResp()
+# print("Player two regrets:")
+# trainer.playerTwoTree.PrintRegrets()
+#
+#
+# print("done")
 
