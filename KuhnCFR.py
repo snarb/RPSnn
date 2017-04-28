@@ -52,11 +52,23 @@ class CFRtrainer:
 
             self.kuhn.RestoreInfoSet(infosetBackup)
 
+        if(cfrNode.utilsCount == 0):
+            avgUtil = 0
+        else:
+            avgUtil = cfrNode.TotalUtil / cfrNode.utilsCount / NUM_ACTIONS
+            #print(avgUtil, nodeUtil)
+
         for action in range(NUM_ACTIONS):
             regret = util[action] - nodeUtil
             opProb = p1 if curPlayer == Players.one else p0
             cfrNode.regretSum[action] += opProb * regret
 
+
+        cfrNode.TotalUtil += nodeUtil
+        cfrNode.utilsCount += 1
+
+
+#0445733333
         return nodeUtil
 
     def Train(self):
@@ -73,7 +85,7 @@ class CFRtrainer:
         #         print(util / cnt)
         results = []
 
-        for i in range(1, 1000):
+        for i in range(1, 5000):
             self.kuhn.NewRound()
             util += self.CFR(1, 1)
             if(cnt % 100 == 0):

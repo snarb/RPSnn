@@ -1,5 +1,3 @@
-import random
-import Utils
 from KuhnPoker import *
 from treelib import Node, Tree
 from CfrNode import CfrNode
@@ -7,13 +5,24 @@ from GameTree import GameTree
 from matplotlib import pyplot as plt
 
 class CFRtrainer:
-    BETA = 0.00
-    SAMPLE_SIZE = 5
-
     def __init__(self):
         self.playerOneTree = GameTree(CfrNode)
         self.playerTwoTree = GameTree(CfrNode)
         self.kuhn = KuhnPoker()
+
+    # def HasChild(self, parentId, childTag, tree):
+    #     if(self.GetChildByTag(parentId, childTag, tree)):
+    #         return True
+    #
+    #     return False
+    #
+    # def GetChildByTag(self, parentId, childTag, tree):
+    #     for childId in  tree.children(parentId):
+    #         childNode = tree[childId]
+    #         if(childNode.tag == childTag):
+    #             return childNode
+    #
+    #     return None
 
     def CFR(self, p0, p1):
         curPlayer = self.kuhn.GetCurrentPlayer()
@@ -24,24 +33,13 @@ class CFRtrainer:
         curPlayerProb = p0 if curPlayer == Players.one else p1
         tree = self.playerOneTree if curPlayer == Players.one else self.playerTwoTree
         cfrNode = tree.GetOrCreateDataNode(self.kuhn, curPlayer)
+        strategy = cfrNode.GetStrategy(curPlayerProb)
         util = [0.0] * NUM_ACTIONS
         nodeUtil = 0
 
-        if (random.random() < CFRtrainer.BETA):
-            strategy = np.array([0.5] * NUM_ACTIONS)
-        else:
-            strategy = cfrNode.GetStrategy(curPlayerProb)
-
-        #CFRtrainer.BETA *= 0.9
-
-        sampleSize = max(int(round(CFRtrainer.SAMPLE_SIZE)), 1)
-        actions = Utils.MakeChoise(strategy, sampleSize)
-
-
         infosetStr = self.kuhn.GetInfoset(curPlayer)
 
-        repsCount = [0] * NUM_ACTIONS
-        for action in actions:
+        for action in range(NUM_ACTIONS):
             infosetBackup = self.kuhn.SaveInfoSet()
             self.kuhn.MakeAction(action)
 
@@ -50,14 +48,9 @@ class CFRtrainer:
             else:
                 util[action] = -self.CFR(p0, p1 * strategy[action])
 
-            repsCount[action] += 1
+            nodeUtil += strategy[action] * util[action]
 
             self.kuhn.RestoreInfoSet(infosetBackup)
-
-        for action in range(NUM_ACTIONS):
-            if(repsCount[action] > 0):
-                util[action] /= repsCount[action]
-                nodeUtil += strategy[action] * util[action]
 
         for action in range(NUM_ACTIONS):
             regret = util[action] - nodeUtil
@@ -70,6 +63,14 @@ class CFRtrainer:
         util = 0
         cnt = 0
 
+        # self.playerOneTree.GetOrCreateCFRNode(self.kuhn, Players.one)
+        # self.playerTwoTree.GetOrCreateCFRNode(self.kuhn, Players.one)
+
+        # while (self.kuhn.NewRound() != 1):
+        #     util += self.CFR(1, 1)
+        #     cnt += 1
+        #     if(cnt % 10 == 0):
+        #         print(util / cnt)
         results = []
 
         for i in range(1, 1000):

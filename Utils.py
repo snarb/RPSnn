@@ -11,7 +11,8 @@ def Normalise(v):
     return v/norm
 
 def MakeChoise(dist, batchSize):
-   return np.random.choice(len(dist), batchSize, p=dist)
+   return np.array([0,1,0,1])
+   #return np.random.choice(len(dist), batchSize, p=dist)
 
 def MakeNormChoise(dist, batchSize):
     dist = Normalise(dist)
