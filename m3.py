@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt
 
 class CFRtrainer:
     BETA = 0.00
-    SAMPLE_SIZE = 16 #16 #24
+    SAMPLE_SIZE = 24 #16 #24
 
     def __init__(self):
         self.playerOneTree = GameTree(CfrNode)
@@ -90,26 +90,41 @@ class CFRtrainer:
 
 
 
-#
+# #
 # trainer = CFRtrainer()
 # trainer.Train()
-#
+# #
 # print("Player one avg strategy:")
 # trainer.playerOneTree.PrintAvgStrategy()
-# print("Player one best resp strategy:")
-# trainer.playerOneTree.PrintBestResp()
-# print("Player one regrets:")
-# trainer.playerOneTree.PrintRegrets()
-#
-#
+# # print("Player one best resp strategy:")
+# # trainer.playerOneTree.PrintBestResp()
+# # print("Player one regrets:")
+# # trainer.playerOneTree.PrintRegrets()
+# #
+# #
 # print("----------------------")
 # print("Player two avg strategy:")
 # trainer.playerTwoTree.PrintAvgStrategy()
-# print("Player two best resp strategy:")
-# trainer.playerTwoTree.PrintBestResp()
-# print("Player two regrets:")
-# trainer.playerTwoTree.PrintRegrets()
+# # print("Player two best resp strategy:")
+# # trainer.playerTwoTree.PrintBestResp()
+# # print("Player two regrets:")
+# # trainer.playerTwoTree.PrintRegrets()
+# #
+# #
+# # print("done")
+#
+#
+# if (trainer.kuhn.IsPlayerOneCloseToNash(trainer.playerOneTree)):
+#     print("Player one is in Nash")
+# else:
+#     print("Player one is not in Nash")
+#
+# if(trainer.kuhn.IsPlayerTwoCloseToNash(trainer.playerTwoTree)):
+#     print("Player two is in Nash")
+# else:
+#     print("Player two is not in Nash")
 #
 #
 # print("done")
+#
 #
