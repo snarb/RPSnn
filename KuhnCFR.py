@@ -3,6 +3,7 @@ from treelib import Node, Tree
 from CfrNode import CfrNode
 from GameTree import GameTree
 from matplotlib import pyplot as plt
+import Utils
 
 class CFRtrainer:
     def __init__(self):
@@ -40,7 +41,13 @@ class CFRtrainer:
         infosetStr = self.kuhn.GetInfoset(curPlayer)
         infosetBackup = self.kuhn.SaveInfoSet()
 
-        if(('3 | pas' in infosetStr) and curPlayer == Players.two):
+        #'1 | bet;bet;uplayed'
+        #'1 | bet;pas;uplayed'
+
+        if(('1 | bet;bet' in infosetStr) and curPlayer == Players.one):
+            g = 6
+
+        if(('1 | bet;pas' in infosetStr) and curPlayer == Players.one):
             g = 6
 
         for action in range(NUM_ACTIONS):
@@ -92,25 +99,36 @@ class CFRtrainer:
 
 
 
-# trainer = CFRtrainer()
-# trainer.Train()
-#
-# print("Player one avg strategy:")
-# trainer.playerOneTree.PrintAvgStrategy()
+
+trainer = CFRtrainer()
+trainer.Train()
+
+print("Player one avg strategy:")
+trainer.playerOneTree.PrintAvgStrategy()
 # print("Player one best resp strategy:")
 # trainer.playerOneTree.PrintBestResp()
 # print("Player one regrets:")
 # trainer.playerOneTree.PrintRegrets()
-#
-#
-# print("----------------------")
-# print("Player two avg strategy:")
-# trainer.playerTwoTree.PrintAvgStrategy()
+
+
+print("----------------------")
+print("Player two avg strategy:")
+trainer.playerTwoTree.PrintAvgStrategy()
 # print("Player two best resp strategy:")
 # trainer.playerTwoTree.PrintBestResp()
 # print("Player two regrets:")
 # trainer.playerTwoTree.PrintRegrets()
-#
-#
-# print("done")
+
+if (trainer.kuhn.IsPlayerOneCloseToNash(trainer.playerOneTree)):
+    print("Player one is in Nash")
+else:
+    print("Player one is not in Nash")
+
+if(trainer.kuhn.IsPlayerTwoCloseToNash(trainer.playerTwoTree)):
+    print("Player two is in Nash")
+else:
+    print("Player two is not in Nash")
+
+
+print("done")
 
