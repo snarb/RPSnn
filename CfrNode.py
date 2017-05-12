@@ -13,7 +13,7 @@ class CfrNode:
         self.utilsCount = 0
         self.TotalUtil = 0
 
-    def GetUtilStrategy(self):
+    def GetUtilRegretStrategy(self):
 
         utilsSum = 0
         for action in range(NUM_ACTIONS):
@@ -44,6 +44,18 @@ class CfrNode:
                 self.strategy[a] = 1.0 / NUM_ACTIONS
 
             self.strategySum[a] += self.strategy[a]
+
+        return self.strategy
+
+
+    def GetUtilStrategy(self):
+
+        utilsSum = 0
+        for action in range(NUM_ACTIONS):
+            utilsSum += self.util[action]
+
+        for a in range(NUM_ACTIONS):
+            self.strategy[a] = self.util[action] / utilsSum
 
         return self.strategy
 

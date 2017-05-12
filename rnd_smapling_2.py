@@ -6,9 +6,9 @@ from CfrNode import CfrNode
 from GameTree import GameTree
 from matplotlib import pyplot as plt
 
-class CFRtrainer:
-    BETA = 0.00
-    SAMPLE_SIZE = 5
+class RndSampler:
+    BETA = 0.0
+    SAMPLE_SIZE = 1
 
     def __init__(self):
         self.playerOneTree = GameTree(CfrNode)
@@ -21,7 +21,7 @@ class CFRtrainer:
     #     else:
     #         util[action] = -self.CFR(p0, p1 * strategy[action], isP1Freeze)
 
-    def CFR(self, p0, p1, isCurPlayerFreez):
+    def CFR(self, p0, p1):
         curPlayer = self.kuhn.GetCurrentPlayer()
 
         if(self.kuhn.IsTerminateState()):
@@ -33,28 +33,30 @@ class CFRtrainer:
         util = [0.0] * NUM_ACTIONS
         nodeUtil = 0
 
-        if (random.random() < CFRtrainer.BETA):
-            strategy = np.array([0.5] * NUM_ACTIONS)
+        strategy = cfrNode.GetStrategy(curPlayerProb)
+
+        if (random.random() < RndSampler.BETA):
+            sampleStrategy = np.array([0.5] * NUM_ACTIONS)
         else:
-            strategy = cfrNode.GetStrategy(curPlayerProb)
+            sampleStrategy = strategy
 
-        #CFRtrainer.BETA *= 0.9
+        sampleStrategy = Utils.Normalise(sampleStrategy)
 
-        sampleSize = max(int(round(CFRtrainer.SAMPLE_SIZE)), 1)
-        actions = Utils.MakeChoise(strategy, sampleSize)
+        sampleSize = max(int(round(RndSampler.SAMPLE_SIZE)), 1)
+        actions = Utils.MakeChoise(sampleStrategy, sampleSize)
 
 
         infosetStr = self.kuhn.GetInfoset(curPlayer)
+
 
         repsCount = [0] * NUM_ACTIONS
         for action in actions:
             infosetBackup = self.kuhn.SaveInfoSet()
             self.kuhn.MakeAction(action)
-            #self.UpdateUtil(curPlayer, util, strategy, action, p0, p1, isP1Freeze)
             if (curPlayer == Players.one):
-                util[action] = -self.CFR(p0 * strategy[action], p1, not isCurPlayerFreez)
+                util[action] += -self.CFR(p0 * strategy[action], p1)
             else:
-                util[action] = -self.CFR(p0, p1 * strategy[action], not isCurPlayerFreez)
+                util[action] += -self.CFR(p0, p1 * strategy[action])
 
             repsCount[action] += 1
 
@@ -66,16 +68,10 @@ class CFRtrainer:
                 nodeUtil += strategy[action] * util[action]
 
         opProb = p1 if curPlayer == Players.one else p0
-        if (isCurPlayerFreez):
-            for action in range(NUM_ACTIONS):
-                regret = util[action] - nodeUtil
-                cfrNode.nextRegretSum[action] += opProb * regret
-        else:
-            for action in range(NUM_ACTIONS):
-                regret = util[action] - nodeUtil
-                cfrNode.regretSum[action] += opProb * regret
-                cfrNode.regretSum[action] += cfrNode.nextRegretSum[action]
-                cfrNode.nextRegretSum[action] = 0
+
+        for action in range(NUM_ACTIONS):
+            regret = util[action] - nodeUtil
+            cfrNode.regretSum[action] += opProb * regret
 
         return nodeUtil
 
@@ -85,20 +81,23 @@ class CFRtrainer:
 
         results = []
 
-        for i in range(1, 1000):
+        for i in range(1, 2000):
             self.kuhn.NewRound()
             util += self.CFR(1, 1)
             if(cnt % 100 == 0):
                 results.append(util / i)
 
+            # RndSampler.BETA *= 0.9999
+
         print("Avg util:", util / i)
         plt.plot(results)
         plt.show()
+        print("Beta ", RndSampler.BETA)
 
 
 
 
-trainer = CFRtrainer()
+trainer = RndSampler()
 trainer.Train()
 
 print("Player one avg strategy:")
@@ -111,7 +110,7 @@ trainer.playerOneTree.PrintAvgStrategy()
 
 print("----------------------")
 print("Player two avg strategy:")
-# trainer.playerTwoTree.PrintAvgStrategy()
+trainer.playerTwoTree.PrintAvgStrategy()
 # print("Player two best resp strategy:")
 # trainer.playerTwoTree.PrintBestResp()
 # print("Player two regrets:")

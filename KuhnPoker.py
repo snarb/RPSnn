@@ -32,7 +32,10 @@ def NextPlayer(currentPlayer):
 
     return Players.one
 
+
 class KuhnPoker:
+    MaxDif = 0
+
     @staticmethod
     def JoinMoves(moves):
         res = ";".join(move.name for move in moves)
@@ -219,5 +222,73 @@ class KuhnPoker:
         self.moves[self.currentMoveId] = adHocMove
         self.currentMoveId += 1
 
+
+
+
+    @staticmethod
+    def IsClose(real, target, tolerance):
+        dif = abs(real - target)
+        if(KuhnPoker.MaxDif < dif):
+            KuhnPoker.MaxDif = dif
+
+        return dif <= tolerance
+
+    @staticmethod
+    def IsPlayerTwoCloseToNash(playerTwoTree, tolerance=0.07):
+        playerTwoStrategy = playerTwoTree['1 | bet;uplayed;uplayed'].data.GetAverageStrategy()
+        if (not KuhnPoker.IsClose(playerTwoStrategy[1], 0.0, tolerance)):  # when having a Jack, never calling
+            return False
+
+        playerTwoStrategy = playerTwoTree['1 | pas;uplayed;uplayed'].data.GetAverageStrategy()
+        if (not KuhnPoker.IsClose(playerTwoStrategy[1], 1 / 3, tolerance)):  # when having a Jack, betting with the probability of 1/3
+            return False
+
+        playerTwoStrategy = playerTwoTree['2 | pas;uplayed;uplayed'].data.GetAverageStrategy()
+        if (not KuhnPoker.IsClose(playerTwoStrategy[0], 1.0, tolerance)):  # when having a Queen, checking if possible
+            return False
+
+        playerTwoStrategy = playerTwoTree['2 | bet;uplayed;uplayed'].data.GetAverageStrategy()
+        if (not KuhnPoker.IsClose(playerTwoStrategy[1], 1 / 3, tolerance)):  # otherwise calling with the probability of 1/3
+            return False
+
+        playerTwoStrategy = playerTwoTree['3 | pas;uplayed;uplayed'].data.GetAverageStrategy()
+        if (not KuhnPoker.IsClose(playerTwoStrategy[0], 0.0, tolerance)):  # Always betting or calling when having a King
+            return False
+
+        playerTwoStrategy = playerTwoTree['3 | bet;uplayed;uplayed'].data.GetAverageStrategy()
+        if (not KuhnPoker.IsClose(playerTwoStrategy[1], 1.0, tolerance)):  # Always betting or calling when having a King
+            return False
+
+        return True
+
+    @staticmethod
+    def IsPlayerOneCloseToNash(playerOneTree, tolerance=0.07):
+
+        playerStrategy = playerOneTree['1 | uplayed;uplayed;uplayed'].data.GetAverageStrategy()
+        alpha = playerStrategy[1]
+        if (alpha > (1/3 +  tolerance) or alpha < 0):  #  freely chooses the probability  alpha with which he will bet when having a Jack [0; 1/3]
+            return False
+
+        playerStrategy = playerOneTree['1 | pas;bet;uplayed'].data.GetAverageStrategy()
+        if (not KuhnPoker.IsClose(playerStrategy[1], 0.0, tolerance)):
+            return False
+
+        playerStrategy = playerOneTree['2 | uplayed;uplayed;uplayed'].data.GetAverageStrategy()
+        if (not KuhnPoker.IsClose(playerStrategy[0], 1.0, tolerance)):  # he should always check when having a Queen
+            return False
+
+        playerStrategy = playerOneTree['2 | pas;bet;uplayed'].data.GetAverageStrategy()
+        if (not KuhnPoker.IsClose(playerStrategy[1], (1/3 + alpha), tolerance)):  #  if the other player bets after this check, he should call with the probability of 1/3 + alpha
+            return False
+
+        playerStrategy = playerOneTree['3 | uplayed;uplayed;uplayed'].data.GetAverageStrategy()
+        if (not KuhnPoker.IsClose(playerStrategy[1], 3 * alpha, tolerance)):  # When having a King, he should bet with the probability of 3 * alpha
+            return False
+
+        playerStrategy = playerOneTree['3 | pas;bet;uplayed'].data.GetAverageStrategy()
+        if (not KuhnPoker.IsClose(playerStrategy[1], 1.0, tolerance)):
+            return False
+
+        return True
 
 

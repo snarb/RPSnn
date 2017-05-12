@@ -72,6 +72,21 @@ class GameTree:
     def PrintStrategy(self):
         self._printFunc(lambda gameNode: gameNode.strategy)
 
+    def GetUtilStrategy(self):
+        self._printFunc(lambda gameNode: gameNode.GetUtilStrategy())
+
+    def PrintUtilRegretStrategy(self):
+        self._printFunc(lambda gameNode: gameNode.GetUtilRegretStrategy())
+
+    def PrintUtils(self):
+        self._printFunc(lambda gameNode: gameNode.util)
+
+
+
+
+
+
+
 
 
 

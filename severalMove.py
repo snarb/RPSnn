@@ -40,21 +40,43 @@ class CFRtrainer:
         infosetStr = self.kuhn.GetInfoset(curPlayer)
         infosetBackup = self.kuhn.SaveInfoSet()
 
-        if(('3 | pas' in infosetStr) and curPlayer == Players.two):
-            g = 6
 
-        for action in range(NUM_ACTIONS):
-            self.kuhn.MakeAction(action)
+        # for action in range(NUM_ACTIONS):
+        #     self.kuhn.MakeAction(action)
+        #
+        #     if(curPlayer == Players.one):
+        #         util[action] += -self.CFR(p0 * strategy[action], p1)
+        #     else:
+        #         util[action] += -self.CFR(p0, p1 * strategy[action])
+        #
+        #     self.kuhn.RestoreInfoSet(infosetBackup)
+        #
+        #
+        #     nodeUtil += strategy[action] * util[action]
 
-            if(curPlayer == Players.one):
-                util[action] = -self.CFR(p0 * strategy[action], p1)
-            else:
-                util[action] = -self.CFR(p0, p1 * strategy[action])
+        self.kuhn.MakeAction(1)
 
-            nodeUtil += strategy[action] * util[action]
+        if (curPlayer == Players.one):
+            util[1] += -self.CFR(p0 * strategy[1], p1)
+        else:
+            util[1] += -self.CFR(p0, p1 * strategy[1])
 
-            self.kuhn.RestoreInfoSet(infosetBackup)
+        self.kuhn.RestoreInfoSet(infosetBackup)
 
+        nodeUtil += strategy[1] * util[1]
+
+        self.kuhn.MakeAction(0)
+        if (curPlayer == Players.one):
+            util[0] += -self.CFR(p0 * strategy[0], p1) / 2
+            util[0] += -self.CFR(p0 * strategy[0], p1) / 2
+        else:
+            util[0] += -self.CFR(p0, p1 * strategy[0]) / 2
+            util[0] += -self.CFR(p0, p1 * strategy[0]) / 2
+
+        self.kuhn.RestoreInfoSet(infosetBackup)
+
+
+        nodeUtil += strategy[0] * util[0]
         # gamma = 0.95
         # if(cfrNode.TotalUtil  > 0):
         #     cfrNode.TotalUtil = (gamma * cfrNode.TotalUtil  + (1 - gamma) * nodeUtil) / 2
@@ -100,25 +122,36 @@ class CFRtrainer:
 
 
 
+    def CheckNash(self):
+            if (self.kuhn.IsPlayerOneCloseToNash(self.playerOneTree)):
+                print("Player one is in Nash")
+            else:
+                print("Player one is not in Nash")
+
+            if(self.kuhn.IsPlayerTwoCloseToNash(self.playerTwoTree)):
+                print("Player two is in Nash")
+            else:
+                print("Player two is not in Nash")
 
 trainer = CFRtrainer()
 trainer.Train()
+trainer.CheckNash()
 
 print("Player one avg strategy:")
 trainer.playerOneTree.PrintAvgStrategy()
-print("Player one best resp strategy:")
-trainer.playerOneTree.PrintBestResp()
-print("Player one regrets:")
-trainer.playerOneTree.PrintRegrets()
+# print("Player one best resp strategy:")
+# trainer.playerOneTree.PrintBestResp()
+# print("Player one regrets:")
+# trainer.playerOneTree.PrintRegrets()
 
 
 print("----------------------")
 print("Player two avg strategy:")
 trainer.playerTwoTree.PrintAvgStrategy()
-print("Player two best resp strategy:")
-trainer.playerTwoTree.PrintBestResp()
-print("Player two regrets:")
-trainer.playerTwoTree.PrintRegrets()
+# print("Player two best resp strategy:")
+# trainer.playerTwoTree.PrintBestResp()
+# print("Player two regrets:")
+# trainer.playerTwoTree.PrintRegrets()
 
 
 print("done")

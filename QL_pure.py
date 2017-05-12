@@ -2,21 +2,15 @@ from KuhnPoker import *
 from treelib import Node, Tree
 from CfrNode import CfrNode
 from GameTree import GameTree
-#from matplotlib import pyplot as plt
+from matplotlib import pyplot as plt
 import Utils
 import math
-from collections import Counter
-from math import sqrt
-
-import time
 
 class CFRtrainer:
-    def __init__(self, alpha):
+    def __init__(self):
         self.playerOneTree = GameTree(CfrNode)
         self.playerTwoTree = GameTree(CfrNode)
         self.kuhn = KuhnPoker()
-        self.stats = Counter()
-        self.alpha = alpha
 
     # def HasChild(self, parentId, childTag, tree):
     #     if(self.GetChildByTag(parentId, childTag, tree)):
@@ -39,8 +33,6 @@ class CFRtrainer:
             return self.kuhn.GetPayoff(curPlayer)
 
         curPlayerProb = p0 if curPlayer == Players.one else p1
-        opProb = p1 if curPlayer == Players.one else p0
-
         tree = self.playerOneTree if curPlayer == Players.one else self.playerTwoTree
         cfrNode = tree.GetOrCreateDataNode(self.kuhn, curPlayer)
         strategy = cfrNode.GetStrategy(curPlayerProb)
@@ -48,12 +40,6 @@ class CFRtrainer:
         nodeUtil = 0
 
         infosetStr = self.kuhn.GetInfoset(curPlayer)
-
-
-        if(infosetStr == '2 | pas;bet;uplayed'):
-            card = self.kuhn.GetPlayerCard(Players.two)
-            self.stats[card] += card * opProb
-
         infosetBackup = self.kuhn.SaveInfoSet()
 
         #'1 | bet;bet;uplayed'
@@ -66,13 +52,11 @@ class CFRtrainer:
             self.kuhn.MakeAction(action)
 
             if(curPlayer == Players.one):
-                util[action] += -self.CFR(p0 * strategy[action], p1)
-                #util[action] += -self.CFR(p0 * strategy[action], p1)
+                util[action] = -self.CFR(p0 * strategy[action], p1)
             else:
-                util[action] += -self.CFR(p0, p1 * strategy[action])
-                #util[action] += -self.CFR(p0, p1 * strategy[action])
+                util[action] = -self.CFR(p0, p1 * strategy[action])
 
-            #util[action] /= 2
+            cfrNode.util[action] += util[action]
 
             nodeUtil += strategy[action] * util[action]
 
@@ -80,13 +64,8 @@ class CFRtrainer:
 
         for action in range(NUM_ACTIONS):
             regret = util[action]  - nodeUtil
-            if(regret > 0):
-                regret = regret
-            else:
-                regret = 0
-
-            #regret = max(0, regret)
-            cfrNode.regretSum[action] = cfrNode.regretSum[action]  +  opProb * regret
+            opProb = p1 if curPlayer == Players.one else p0
+            cfrNode.regretSum[action] += opProb * regret
 
 
 
@@ -100,7 +79,6 @@ class CFRtrainer:
     def Train(self):
         util = 0
         cnt = 0
-        start_time = time.time()
 
         # self.playerOneTree.GetOrCreateCFRNode(self.kuhn, Players.one)
         # self.playerTwoTree.GetOrCreateCFRNode(self.kuhn, Players.one)
@@ -112,7 +90,7 @@ class CFRtrainer:
         #         print(util / cnt)
         results = []
         # utils = []
-        for i in range(1, 30000):
+        for i in range(1, 10000):
             self.kuhn.NewRound()
             curUtil = self.CFR(1, 1)
             # utils.append(curUtil)
@@ -120,8 +98,7 @@ class CFRtrainer:
             if(cnt % 100 == 0):
                 results.append(util / i)
 
-        # print("Time: ", time.time() - start_time)
-        # print("Avg util:", util / i)
+        print("Avg util:", util / i)
         # plt.plot(results)
         # plt.show()
 
@@ -140,23 +117,33 @@ class CFRtrainer:
 
 
 
-trainer = CFRtrainer(1)
+trainer = CFRtrainer()
 trainer.Train()
-trainer.CheckNash()
+#
 print("Player one avg strategy:")
 trainer.playerOneTree.PrintAvgStrategy()
 print("Player one best resp strategy:")
 trainer.playerOneTree.PrintBestResp()
+
+print("Player Util regret strategy:")
+trainer.playerOneTree.PrintUtilRegretStrategy()
+
+print("Player Util strategy:")
+trainer.playerOneTree.GetUtilStrategy()
+
+print("Player Utils:")
+trainer.playerOneTree.PrintUtils()
+
+
+print("Player one regrets:")
+trainer.playerOneTree.PrintRegrets()
 #
-# # # print("Player one regrets:")
-# # # trainer.playerOneTree.PrintRegrets()
-# #
-# #
+#
 # print("----------------------")
 # print("Player two avg strategy:")
 # trainer.playerTwoTree.PrintAvgStrategy()
-# print("Player two best resp strategy:")
-# trainer.playerTwoTree.PrintBestResp()
+# # print("Player two best resp strategy:")
+# # trainer.playerTwoTree.PrintBestResp()
 # # print("Player two regrets:")
 # # trainer.playerTwoTree.PrintRegrets()
 #
@@ -165,4 +152,3 @@ trainer.playerOneTree.PrintBestResp()
 # print("Max dif: " , KuhnPoker.MaxDif)
 # print("done")
 #
-

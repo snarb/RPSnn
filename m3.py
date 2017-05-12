@@ -29,7 +29,7 @@ class CFRtrainer:
         if (random.random() < CFRtrainer.BETA):
             strategy = np.array([0.5] * NUM_ACTIONS)
         else:
-            strategy = cfrNode.GetUtilStrategy()
+            strategy = cfrNode.GetUtilRegretStrategy()
 
         #CFRtrainer.BETA *= 0.9
         sampleSize = max(int(round(curSamplesCount)), 1)
