@@ -7,8 +7,9 @@ import Utils
 import math
 from collections import Counter
 from math import sqrt
-
+import random
 import time
+from NodeEstimator import Estimator
 
 class CFRtrainer:
     def __init__(self, alpha):
@@ -17,6 +18,9 @@ class CFRtrainer:
         self.kuhn = KuhnPoker()
         self.stats = Counter()
         self.alpha = alpha
+        self.trainigXdata = []
+        self.trainigYdata = []
+
 
     # def HasChild(self, parentId, childTag, tree):
     #     if(self.GetChildByTag(parentId, childTag, tree)):
@@ -44,22 +48,31 @@ class CFRtrainer:
         tree = self.playerOneTree if curPlayer == Players.one else self.playerTwoTree
         cfrNode = tree.GetOrCreateDataNode(self.kuhn, curPlayer)
         strategy = cfrNode.GetStrategy(curPlayerProb)
+
+        # if(random.random() < 0.9):
+        #     strategy = cfrNode.GetStrategy(curPlayerProb)
+        # else:
+        #     strategy = cfrNode.GetAverageStrategy()
+
         util = [0.0] * NUM_ACTIONS
         nodeUtil = 0
 
         infosetStr = self.kuhn.GetInfoset(curPlayer)
 
 
-        if(infosetStr == '2 | pas;bet;uplayed'):
-            card = self.kuhn.GetPlayerCard(Players.two)
-            self.stats[card] += card * opProb
+        # if(infosetStr == '2 | pas;bet;uplayed'):
+        #     card = self.kuhn.GetPlayerCard(Players.two)
+        #     self.stats[card] += card * opProb
 
         infosetBackup = self.kuhn.SaveInfoSet()
 
         #'1 | bet;bet;uplayed'
         #'1 | bet;pas;uplayed'
 
-        # if(('1 | bet;bet' in infosetStr) and curPlayer == Players.one):
+
+            # g = 6
+
+        # if (('1 | bet;bet' in infosetStr) and curPlayer == Players.one):
         #     g = 6
 
         for action in range(NUM_ACTIONS):
@@ -80,16 +93,20 @@ class CFRtrainer:
 
         for action in range(NUM_ACTIONS):
             regret = util[action]  - nodeUtil
-            if(regret > 0):
-                regret = regret
-            else:
-                regret = 0
+            # if(regret > 0):
+            #     regret = regret
+            # else:
+            #     regret = 0
 
             #regret = max(0, regret)
             cfrNode.regretSum[action] = cfrNode.regretSum[action]  +  opProb * regret
 
 
-
+        if(('1 | uplayed;uplayed;uplayed' in infosetStr) and curPlayer == Players.one):
+            self.trainigXdata.append(np.array(strategy))
+            self.trainigYdata.append(nodeUtil)
+            if (strategy[0] != 1):
+                strategy = strategy
 #0445733333
         return nodeUtil
 
@@ -110,9 +127,11 @@ class CFRtrainer:
         #     cnt += 1
         #     if(cnt % 10 == 0):
         #         print(util / cnt)
+
+
         results = []
         # utils = []
-        for i in range(1, 30000):
+        for i in range(1, 1300):
             self.kuhn.NewRound()
             curUtil = self.CFR(1, 1)
             # utils.append(curUtil)
@@ -120,6 +139,8 @@ class CFRtrainer:
             if(cnt % 100 == 0):
                 results.append(util / i)
 
+        estimator = Estimator()
+        estimator.Train(self.trainigXdata, self.trainigYdata)
         # print("Time: ", time.time() - start_time)
         # print("Avg util:", util / i)
         # plt.plot(results)
