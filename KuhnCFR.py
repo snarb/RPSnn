@@ -106,11 +106,8 @@ class CFRtrainer:
             #     regret = 0
 
             #regret = max(0, regret)
-            if(cfrNode.regretSum[action] == 0):
-                cfrNode.regretSum[action] = opProb * regret
-            else:
-                dif = (cfrNode.regretSum[action] - opProb * regret) / cfrNode.regretSum[action]
-                cfrNode.regretSum[action] = cfrNode.regretSum[action]  * dif
+            
+            cfrNode.regretSum[action] = cfrNode.regretSum[action]  +   opProb * regret
 
 
         if(('1 | uplayed;uplayed;uplayed' in infosetStr) and curPlayer == Players.one):
@@ -159,7 +156,7 @@ class CFRtrainer:
 
         results = []
         # utils = []
-        for i in range(1, 3600):
+        for i in range(1, 600):
             self.kuhn.NewRound()
             curUtil = self.CFR(1, 1)
             # utils.append(curUtil)
