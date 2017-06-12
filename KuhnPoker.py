@@ -266,7 +266,7 @@ class KuhnPoker:
 
         playerStrategy = playerOneTree['1 | uplayed;uplayed;uplayed'].data.GetAverageStrategy()
         alpha = playerStrategy[1]
-        if (alpha > (1/3 +  tolerance) or alpha < 0):  #  freely chooses the probability  alpha with which he will bet when having a Jack [0; 1/3]
+        if (alpha > (1/3 +  tolerance) or alpha < 0):  #  freely chooses the probability alpha with which he will bet when having a Jack [0; 1/3]
             return False
 
         playerStrategy = playerOneTree['1 | pas;bet;uplayed'].data.GetAverageStrategy()

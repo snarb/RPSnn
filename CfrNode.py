@@ -13,6 +13,8 @@ class CfrNode:
         self.utilsCount = 0
         self.TotalUtil = 0
 
+        self.avgStrategies = []
+
     def GetUtilRegretStrategy(self):
 
         utilsSum = 0
@@ -73,7 +75,14 @@ class CfrNode:
 
             self.strategySum[a] += realizationWeight * self.strategy[a]
 
+        self.avgStrategies.append(self.GetAverageStrategy())
         return self.strategy
+
+    def GetMegaAvgStrategy(self):
+        miss = int(len(self.avgStrategies) * 0.5)
+        ar = np.array(self.avgStrategies[miss:])
+        mn = np.mean(ar, axis=0)
+        return mn
 
     def GetAverageStrategy(self):
         avgStrategy = [0.0] * NUM_ACTIONS

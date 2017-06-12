@@ -14,12 +14,12 @@ import pandas as pd
 from NodeEstimator import Estimator
 
 class CFRtrainer:
-    def __init__(self):
+    def __init__(self, alpha):
         self.playerOneTree = GameTree(CfrNode)
         self.playerTwoTree = GameTree(CfrNode)
         self.kuhn = KuhnPoker()
         self.stats = Counter()
-        #self.alpha = alpha
+        self.alpha = alpha
         self.trainigXdata = []
         self.trainigYdata = []
         self.hists = []
@@ -106,11 +106,7 @@ class CFRtrainer:
             #     regret = 0
 
             #regret = max(0, regret)
-            if(cfrNode.regretSum[action] == 0):
-                cfrNode.regretSum[action] = opProb * regret
-            else:
-                dif = (cfrNode.regretSum[action] - opProb * regret) / cfrNode.regretSum[action]
-                cfrNode.regretSum[action] = cfrNode.regretSum[action]  * dif
+            cfrNode.regretSum[action] = cfrNode.regretSum[action]  +  opProb * regret
 
 
         if(('1 | uplayed;uplayed;uplayed' in infosetStr) and curPlayer == Players.one):
@@ -159,7 +155,7 @@ class CFRtrainer:
 
         results = []
         # utils = []
-        for i in range(1, 3600):
+        for i in range(1, 3000):
             self.kuhn.NewRound()
             curUtil = self.CFR(1, 1)
             # utils.append(curUtil)
@@ -246,7 +242,7 @@ class CFRtrainer:
 
 
 
-trainer = CFRtrainer()
+trainer = CFRtrainer(1)
 trainer.Train()
 trainer.CheckNash()
 print("Player one avg strategy:")
@@ -258,11 +254,11 @@ trainer.playerOneTree.PrintBestResp()
 # # # trainer.playerOneTree.PrintRegrets()
 # #
 # #
-print("----------------------")
-print("Player two avg strategy:")
-trainer.playerTwoTree.PrintAvgStrategy()
-print("Player two best resp strategy:")
-trainer.playerTwoTree.PrintBestResp()
+# print("----------------------")
+# print("Player two avg strategy:")
+# trainer.playerTwoTree.PrintAvgStrategy()
+# print("Player two best resp strategy:")
+# trainer.playerTwoTree.PrintBestResp()
 # # print("Player two regrets:")
 # # trainer.playerTwoTree.PrintRegrets()
 #

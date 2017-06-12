@@ -8,7 +8,7 @@ from KuhnCFR import CFRtrainer as vanillaCFR
 #from severalMove import CFRtrainer as RndSampler
 
 
-def CFR(kuhn, playerOneTree, playerTwoTree):
+def CFR(kuhn, playerOneTree, playerTwoTree, isP1mega = False, isP2mega = False):
     curPlayer = kuhn.GetCurrentPlayer()
 
     if (kuhn.IsTerminateState()):
@@ -16,21 +16,25 @@ def CFR(kuhn, playerOneTree, playerTwoTree):
 
     tree = playerOneTree if curPlayer == Players.one else playerTwoTree
     cfrNode = tree.GetOrCreateDataNode(kuhn, curPlayer)
-    strategy = cfrNode.GetAverageStrategy()
+
+    if((curPlayer == Players.one and isP1mega) or (curPlayer == Players.two and isP2mega)):
+        strategy = cfrNode.GetMegaAvgStrategy()
+    else:
+        strategy = cfrNode.GetAverageStrategy()
 
     action = Utils.MakeChoise(strategy, 1)[0]
     kuhn.MakeAction(action)
-    util = -CFR(kuhn, playerOneTree, playerTwoTree)
+    util = -CFR(kuhn, playerOneTree, playerTwoTree, isP1mega, isP2mega)
     return util
 
 
-def Test(playerOneTree, playerTwoTree):
+def Test(playerOneTree, playerTwoTree, isP1mega = False, isP2mega = False):
         kuhn = KuhnPoker()
         util = 0
 
         for i in range(1, 8000):
             kuhn.NewRound()
-            curUtil = CFR(kuhn, playerOneTree, playerTwoTree)
+            curUtil = CFR(kuhn, playerOneTree, playerTwoTree, isP1mega, isP2mega)
             util += curUtil
 
         return util / i
@@ -42,21 +46,22 @@ print("Training vanillaCFR")
 sumU = 0
 countU = 0
 
-for i in range(10):
-    vanillaCFRtrainer1 = vanillaCFR(1.0)
+for i in range(5):
+    vanillaCFRtrainer1 = vanillaCFR()
     vanillaCFRtrainer1.Train()
 
-    vanillaCFRtrainer2 = vanillaCFR(10)
+    vanillaCFRtrainer2 = vanillaCFR()
     vanillaCFRtrainer2.Train()
 
     # vanillaCFRtrainer.CheckNash()
-    testUtil1 = Test(vanillaCFRtrainer1.playerOneTree, vanillaCFRtrainer2.playerTwoTree)
+    testUtil1 = Test(vanillaCFRtrainer1.playerOneTree, vanillaCFRtrainer2.playerTwoTree, isP1mega = True, isP2mega = False)
     #print("Vanilla safe play test util: ", testUtil1)
 
 
-    testUtil2 = Test(vanillaCFRtrainer2.playerOneTree, vanillaCFRtrainer1.playerTwoTree)
+    testUtil2 = Test(vanillaCFRtrainer2.playerOneTree, vanillaCFRtrainer1.playerTwoTree, isP1mega = False, isP2mega = True)
     sumU += testUtil1 + (-testUtil2)
     countU += 1
+    print("round", i)
 
 
 print("Avg Vanila profit 1: ", sumU / countU)

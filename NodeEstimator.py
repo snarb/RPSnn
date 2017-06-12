@@ -5,18 +5,20 @@ from keras.layers import Dense, Activation
 #from keras.wrappers.scikit_learn import KerasRegressor
 #from sklearn.metrics import mean_squared_error
 from keras import optimizers
+from matplotlib import pyplot as plt
 
 BATCH_SIZE = 5
 SAMPLES = 2000
 EPOCHS = 1
-INPUT_SIZE = 2 # Two actions
+INPUT_SIZE = 1 # Two actions
 
 class Estimator:
 
     def __init__(self):
         model = Sequential()
-        model.add(Dense(5, input_dim=INPUT_SIZE, kernel_initializer='normal', activation='relu'))
-        model.add(Dense(7, kernel_initializer='normal', activation='relu'))
+        model.add(Dense(5, input_dim=INPUT_SIZE, use_bias = True, kernel_initializer='normal', activation='relu'))
+        #model.add(Dense(5, input_dim=INPUT_SIZE, use_bias=True, kernel_initializer='normal'))
+        model.add(Dense(7, kernel_initializer='normal', use_bias = True,  activation='relu'))
         model.add(Dense(1, kernel_initializer='normal'))
         #sgd = optimizers.SGD(lr=0.01, momentum=0.9, nesterov=True)
         adam = optimizers.Adam(lr=0.05)
@@ -26,6 +28,16 @@ class Estimator:
 
 
     def Train(self, strategies, utils):
+        # dic = {}
+        #
+        #
+        # for i in range(len(strategies)):
+        #     strategy = strategies[i]
+        #     if(strategy in )
+        #
+
+
+
         # x_train = np.random.random_sample((SAMPLES, BATCH_SIZE)) / 2
         # y_train = x_train  * x_train
         #
@@ -33,11 +45,11 @@ class Estimator:
         # x_test = np.random.random_sample((SAMPLES, BATCH_SIZE)) / 2
         # y_test = x_test  * x_test
         testL = int(len(strategies) * 0.9)
-        x_train = np.array(strategies[:testL]).reshape(testL, INPUT_SIZE)
-        y_train = np.array(utils[:testL]) / 2
+        x_train = np.array(strategies[:testL])[:,0].reshape(testL, INPUT_SIZE)
+        y_train = np.array(utils[:testL])
 
-        x_test = np.array(strategies[testL:]).reshape(-1, INPUT_SIZE)
-        y_test = np.array(utils[testL:]) / 2
+        x_test = np.array(strategies[testL:])[:,0].reshape(-1, INPUT_SIZE)
+        y_test = np.array(utils[testL:])
 
         self.model.fit(x_train, y_train, epochs=5, batch_size=BATCH_SIZE)
 
@@ -55,6 +67,18 @@ class Estimator:
         #score = mean_squared_error(y_test, estimator.predict(x_test))
 
         print("score is: ",  score)
+
+        x = []
+        y = []
+
+        for i in range(int(1.0 / 0.05)):
+            x.append(i * 0.05)
+
+        preds = self.model.predict(x)
+        return x, preds
+        # plt.plot(x, preds)
+        # plt.show()
+
         #0.1278
 
 
